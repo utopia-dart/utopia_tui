@@ -1,6 +1,5 @@
-// TODO: Put public facing types in this file.
-
-/// Checks if you are awesome. Spoiler: you are.
+/// Backward-compat small stub to support initial tests.
 class Awesome {
   bool get isAwesome => true;
 }
+

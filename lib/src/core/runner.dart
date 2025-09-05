@@ -30,7 +30,8 @@ class TuiRunner {
   Future<void> run() async {
     var ctx = TuiContext(terminal);
     app.init(ctx);
-    List<String>? lastFrame;
+    List<String>? lastVisible;
+    List<String>? lastStyled;
 
     try {
       // Prepare terminal
@@ -57,7 +58,13 @@ class TuiRunner {
           }
           try {
             app.onEvent(ev, ctx);
-            _redraw(ctx, refLast: lastFrame, outLast: (f) => lastFrame = f);
+            _redraw(
+              ctx,
+              refLastVisible: lastVisible,
+              refLastStyled: lastStyled,
+              outLastVisible: (v) => lastVisible = v,
+              outLastStyled: (s) => lastStyled = s,
+            );
           } catch (e) {
             if (!_stopped) {
               _stopped = true;
@@ -70,10 +77,17 @@ class TuiRunner {
       // Ticks
       final tickEvery = app.tickInterval;
       if (tickEvery != null) {
-        _tickSub = Stream.periodic(tickEvery, (_) => TuiTickEvent(DateTime.now()))
-            .listen((e) {
+        _tickSub =
+            Stream.periodic(tickEvery, (_) => TuiTickEvent(DateTime.now()))
+                .listen((e) {
           app.onEvent(e, ctx);
-          _redraw(ctx, refLast: lastFrame, outLast: (f) => lastFrame = f);
+          _redraw(
+            ctx,
+            refLastVisible: lastVisible,
+            refLastStyled: lastStyled,
+            outLastVisible: (v) => lastVisible = v,
+            outLastStyled: (s) => lastStyled = s,
+          );
         });
       }
 
@@ -90,14 +104,29 @@ class TuiRunner {
           // recreate context with new size and redraw fully
           ctx = TuiContext(terminal);
           app.onEvent(e, ctx);
-          lastFrame = null;
+          lastVisible = null;
+          lastStyled = null;
           terminal.clearScreen();
-          _redraw(ctx, refLast: lastFrame, outLast: (f) => lastFrame = f, forceFull: true);
+          _redraw(
+            ctx,
+            refLastVisible: lastVisible,
+            refLastStyled: lastStyled,
+            outLastVisible: (v) => lastVisible = v,
+            outLastStyled: (s) => lastStyled = s,
+            forceFull: true,
+          );
         }
       });
 
       // Initial draw and wait for stop signal
-      _redraw(ctx, refLast: lastFrame, outLast: (f) => lastFrame = f, forceFull: true);
+      _redraw(
+        ctx,
+        refLastVisible: lastVisible,
+        refLastStyled: lastStyled,
+        outLastVisible: (v) => lastVisible = v,
+        outLastStyled: (s) => lastStyled = s,
+        forceFull: true,
+      );
       _stopCompleter = Completer<void>();
       await _stopCompleter.future;
     } finally {
@@ -107,25 +136,35 @@ class TuiRunner {
 
   void _redraw(
     TuiContext ctx, {
-    List<String>? refLast,
-    required void Function(List<String>) outLast,
+    List<String>? refLastVisible,
+    List<String>? refLastStyled,
+    required void Function(List<String>) outLastVisible,
+    required void Function(List<String>) outLastStyled,
     bool forceFull = false,
   }) {
     // Build into buffer
     ctx.clear();
     app.build(ctx);
-    final frame = ctx.snapshot();
+    final frameVisible = ctx.snapshot();
+    final frameStyled = ctx.snapshotStyled();
 
-    // Diff and render changes only
-    for (var r = 0; r < frame.length; r++) {
-      final line = frame[r];
-      final prev = (refLast != null && r < refLast.length) ? refLast[r] : null;
-      if (forceFull || prev == null || prev != line) {
+    // Diff and render changes: update if visible OR style changed
+    for (var r = 0; r < frameVisible.length; r++) {
+      final lineV = frameVisible[r];
+      final prevV = (refLastVisible != null && r < refLastVisible.length)
+          ? refLastVisible[r]
+          : null;
+      final lineS = frameStyled[r];
+      final prevS =
+          (refLastStyled != null && r < refLastStyled.length) ? refLastStyled[r] : null;
+
+      if (forceFull || prevV == null || prevS == null || prevV != lineV || prevS != lineS) {
         terminal.setCursor(r, 0);
-        terminal.write(line);
+        terminal.write(lineS);
       }
     }
-    outLast(frame);
+    outLastVisible(frameVisible);
+    outLastStyled(frameStyled);
   }
 
   Future<void> _dispose() async {
@@ -134,7 +173,10 @@ class TuiRunner {
     await _keySub?.cancel();
     _keyPort?.close();
     _keyIsolate?.kill(priority: Isolate.immediate);
+    // Do not clear the screen; restore cursor + attributes and print newline
+    terminal.write('\x1b[0m'); // reset attributes
     terminal.showCursor();
+    terminal.write('\n'); // ensure prompt appears on a new line
   }
 }
 

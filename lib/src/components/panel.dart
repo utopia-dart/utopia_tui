@@ -1,9 +1,14 @@
 import '../core/theme.dart';
+import '../core/style.dart';
+import 'dart:math' as math;
 
 class TuiPanel {
   final String title;
   final TuiTheme theme;
-  TuiPanel({this.title = '', TuiTheme? theme}) : theme = theme ?? const TuiTheme();
+  final TuiStyle? titleStyle;
+  final TuiStyle? borderStyle;
+  TuiPanel({this.title = '', TuiTheme? theme, this.titleStyle, this.borderStyle})
+      : theme = theme ?? const TuiTheme();
 
   List<String> wrap(List<String> contentLines, int width, int height) {
     // Simple box drawing: top/bottom borders and vertical edges
@@ -12,15 +17,28 @@ class TuiPanel {
     final out = <String>[];
     final topTitle = title.isEmpty ? '' : ' $title ';
     final b = theme.border;
-    final top = '${b.topLeft}$topTitle${b.horizontal * (w - 2 - topTitle.length)}${b.topRight}';
-    out.add(top.substring(0, w));
+    final styledTitle = titleStyle?.apply(topTitle) ?? topTitle;
+    final visTitleLen = tuiStripAnsi(styledTitle).length;
+    final horizCount = math.max(0, w - 2 - visTitleLen);
+    final horiz = b.horizontal * horizCount;
+    var top = '${b.topLeft}$styledTitle$horiz${b.topRight}';
+    if (borderStyle != null) top = borderStyle!.apply(top);
+    out.add(top);
     final innerHeight = h - 2;
     for (var i = 0; i < innerHeight; i++) {
       final line = i < contentLines.length ? contentLines[i] : '';
-      final padded = line.padRight(w - 2).substring(0, w - 2);
-      out.add('${b.vertical}$padded${b.vertical}');
+      // ANSI-aware clip + pad to inner width
+      final clipped = tuiClipAnsi(line, w - 2);
+      final visLen = tuiStripAnsi(clipped).length;
+      final pad = (w - 2 - visLen);
+      final padded = '$clipped${' ' * pad}';
+      var mid = '${b.vertical}$padded${b.vertical}';
+      if (borderStyle != null) mid = borderStyle!.apply(mid);
+      out.add(mid);
     }
-    out.add(('${b.bottomLeft}${b.horizontal * (w - 2)}${b.bottomRight}').substring(0, w));
+    var bottom = '${b.bottomLeft}${b.horizontal * (w - 2)}${b.bottomRight}';
+    if (borderStyle != null) bottom = borderStyle!.apply(bottom);
+    out.add(bottom);
     return out;
   }
 }
