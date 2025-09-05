@@ -1,7 +1,11 @@
 class TuiLayout {
   /// Split a horizontal region [total] into [parts] widths. Negative widths are
   /// treated as flexible; remaining space is distributed equally among them.
-  static List<(int offset, int width)> splitH(int total, List<int> parts, {int gap = 0}) {
+  static List<(int offset, int width)> splitH(
+    int total,
+    List<int> parts, {
+    int gap = 0,
+  }) {
     final fixed = parts.where((w) => w >= 0).fold<int>(0, (a, b) => a + b);
     final flexCount = parts.where((w) => w < 0).length;
     final gaps = gap * (parts.length - 1);
@@ -20,7 +24,11 @@ class TuiLayout {
 
   /// Split a vertical region [total] into [parts] heights. Negative heights
   /// are flexible and share remaining space.
-  static List<(int offset, int height)> splitV(int total, List<int> parts, {int gap = 0}) {
+  static List<(int offset, int height)> splitV(
+    int total,
+    List<int> parts, {
+    int gap = 0,
+  }) {
     final fixed = parts.where((h) => h >= 0).fold<int>(0, (a, b) => a + b);
     final flexCount = parts.where((h) => h < 0).length;
     final gaps = gap * (parts.length - 1);
@@ -37,4 +45,3 @@ class TuiLayout {
     return result;
   }
 }
-

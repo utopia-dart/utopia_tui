@@ -61,8 +61,11 @@ class TuiTextInput {
 
     // Insert a blinking underscore at the cursor position
     final cursorChar = blinkOn ? '_' : ' ';
-    final styledCursor = (cursorStyle ?? const TuiStyle(bold: true)).apply(cursorChar);
-    inside = inside.substring(0, idx) + styledCursor + inside.substring(idx + 1);
+    final styledCursor = (cursorStyle ?? const TuiStyle(bold: true)).apply(
+      cursorChar,
+    );
+    inside =
+        inside.substring(0, idx) + styledCursor + inside.substring(idx + 1);
 
     final boxed = showBox ? '[$inside]' : inside;
     return boxed;

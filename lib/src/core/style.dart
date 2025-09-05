@@ -7,23 +7,35 @@ class TuiStyle {
   final bool italic;
   final bool underline;
 
-  const TuiStyle({this.fg, this.bg, this.bold = false, this.italic = false, this.underline = false});
+  const TuiStyle({
+    this.fg,
+    this.bg,
+    this.bold = false,
+    this.italic = false,
+    this.underline = false,
+  });
 
   TuiStyle merge(TuiStyle other) => TuiStyle(
-        fg: other.fg ?? fg,
-        bg: other.bg ?? bg,
-        bold: bold || other.bold,
-        italic: italic || other.italic,
-        underline: underline || other.underline,
-      );
+    fg: other.fg ?? fg,
+    bg: other.bg ?? bg,
+    bold: bold || other.bold,
+    italic: italic || other.italic,
+    underline: underline || other.underline,
+  );
 
-  TuiStyle copyWith({int? fg, int? bg, bool? bold, bool? italic, bool? underline}) => TuiStyle(
-        fg: fg ?? this.fg,
-        bg: bg ?? this.bg,
-        bold: bold ?? this.bold,
-        italic: italic ?? this.italic,
-        underline: underline ?? this.underline,
-      );
+  TuiStyle copyWith({
+    int? fg,
+    int? bg,
+    bool? bold,
+    bool? italic,
+    bool? underline,
+  }) => TuiStyle(
+    fg: fg ?? this.fg,
+    bg: bg ?? this.bg,
+    bold: bold ?? this.bold,
+    italic: italic ?? this.italic,
+    underline: underline ?? this.underline,
+  );
 
   String apply(String text) {
     final buf = StringBuffer();
@@ -43,6 +55,42 @@ class TuiStyle {
     }
     return text;
   }
+
+  /// Get the ANSI escape sequence for this style (without reset)
+  String toAnsi() {
+    if (bold || italic || underline || fg != null || bg != null) {
+      final buf = StringBuffer();
+      buf.write('\x1b[');
+      final parts = <String>[];
+      if (bold) parts.add('1');
+      if (italic) parts.add('3');
+      if (underline) parts.add('4');
+      if (fg != null) parts.add('38;5;$fg');
+      if (bg != null) parts.add('48;5;$bg');
+      buf.write(parts.join(';'));
+      buf.write('m');
+      return buf.toString();
+    }
+    return '';
+  }
+
+  /// Check if this style has any formatting
+  bool get isEmpty =>
+      !bold && !italic && !underline && fg == null && bg == null;
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    return other is TuiStyle &&
+        other.fg == fg &&
+        other.bg == bg &&
+        other.bold == bold &&
+        other.italic == italic &&
+        other.underline == underline;
+  }
+
+  @override
+  int get hashCode => Object.hash(fg, bg, bold, italic, underline);
 }
 
 // Strip ANSI escape sequences for width calculations.

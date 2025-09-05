@@ -98,4 +98,28 @@ class TuiTheme {
     focusBg: TuiStyle(bg: 235),
     focusBorderStyle: TuiStyle(fg: 46),
   );
+
+  static const monokai = TuiTheme(
+    border: TuiBorderChars.rounded,
+    listSelectedPrefix: '>',
+    listUnselectedPrefix: ' ',
+    accent: TuiStyle(bold: true, fg: 197),
+    dim: TuiStyle(fg: 248),
+    borderStyle: TuiStyle(fg: 242),
+    titleStyle: TuiStyle(bold: true, fg: 197),
+    focusBg: TuiStyle(bg: 238),
+    focusBorderStyle: TuiStyle(fg: 197),
+  );
+
+  static const oceanic = TuiTheme(
+    border: TuiBorderChars.rounded,
+    listSelectedPrefix: '>',
+    listUnselectedPrefix: ' ',
+    accent: TuiStyle(bold: true, fg: 74),
+    dim: TuiStyle(fg: 244),
+    borderStyle: TuiStyle(fg: 240),
+    titleStyle: TuiStyle(bold: true, fg: 74),
+    focusBg: TuiStyle(bg: 237),
+    focusBorderStyle: TuiStyle(fg: 74),
+  );
 }

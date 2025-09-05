@@ -25,15 +25,22 @@ class TuiRunner {
   int _lastHeight = 0;
 
   TuiRunner(this.app, {TuiTerminalInterface? terminal})
-      : terminal = terminal ?? TuiTerminal();
+    : terminal = terminal ?? TuiTerminal();
 
   Future<void> run() async {
     var ctx = TuiContext(terminal);
-    app.init(ctx);
     List<String>? lastVisible;
     List<String>? lastStyled;
 
     try {
+      // Initialize the app
+      try {
+        app.init(ctx);
+      } catch (e) {
+        // If init fails, we still want to show something useful
+        print('Error during app initialization: $e');
+      }
+
       // Prepare terminal
       terminal.clearScreen();
       terminal.hideCursor();
@@ -45,50 +52,84 @@ class TuiRunner {
       _keyPort = ReceivePort();
       _keyIsolate = await Isolate.spawn(_keyReaderMain, _keyPort!.sendPort);
 
-      // Wire key stream
-      _keySub = _keyPort!.listen((dynamic data) {
-        final ev = _decodeKeyPayload(data);
-        if (ev != null) {
-          if (ev.code == TuiKeyCode.ctrlC) {
-            if (!_stopped) {
-              _stopped = true;
-              _stopCompleter.complete();
+      // Wire key stream with error handling
+      _keySub = _keyPort!.listen(
+        (dynamic data) {
+          final ev = _decodeKeyPayload(data);
+          if (ev != null) {
+            if (ev.code == TuiKeyCode.ctrlC) {
+              if (!_stopped) {
+                _stopped = true;
+                _stopCompleter.complete();
+              }
+              return;
             }
-            return;
-          }
-          try {
-            app.onEvent(ev, ctx);
-            _redraw(
-              ctx,
-              refLastVisible: lastVisible,
-              refLastStyled: lastStyled,
-              outLastVisible: (v) => lastVisible = v,
-              outLastStyled: (s) => lastStyled = s,
-            );
-          } catch (e) {
-            if (!_stopped) {
-              _stopped = true;
-              _stopCompleter.completeError(e);
+            try {
+              app.onEvent(ev, ctx);
+              _redraw(
+                ctx,
+                refLastVisible: lastVisible,
+                refLastStyled: lastStyled,
+                outLastVisible: (v) => lastVisible = v,
+                outLastStyled: (s) => lastStyled = s,
+                forceFull: true,
+              );
+            } catch (e) {
+              // Log the error but don't crash the TUI
+              try {
+                ctx.clear();
+                ctx.surface.putText(
+                  0,
+                  0,
+                  'Error: ${e.toString().substring(0, ctx.width.clamp(0, 100))}',
+                );
+                final frameStyled = ctx.snapshotStyled();
+                for (var r = 0; r < 1; r++) {
+                  terminal.setCursor(r, 0);
+                  terminal.write(frameStyled[r]);
+                }
+              } catch (_) {
+                // If even error display fails, just continue
+              }
             }
           }
-        }
-      });
+        },
+        onError: (error) {
+          // Handle stream errors gracefully
+          if (!_stopped) {
+            _stopped = true;
+            _stopCompleter.completeError('Input stream error: $error');
+          }
+        },
+      );
 
-      // Ticks
+      // Ticks with error handling
       final tickEvery = app.tickInterval;
       if (tickEvery != null) {
         _tickSub =
-            Stream.periodic(tickEvery, (_) => TuiTickEvent(DateTime.now()))
-                .listen((e) {
-          app.onEvent(e, ctx);
-          _redraw(
-            ctx,
-            refLastVisible: lastVisible,
-            refLastStyled: lastStyled,
-            outLastVisible: (v) => lastVisible = v,
-            outLastStyled: (s) => lastStyled = s,
-          );
-        });
+            Stream.periodic(
+              tickEvery,
+              (_) => TuiTickEvent(DateTime.now()),
+            ).listen(
+              (e) {
+                try {
+                  app.onEvent(e, ctx);
+                  _redraw(
+                    ctx,
+                    refLastVisible: lastVisible,
+                    refLastStyled: lastStyled,
+                    outLastVisible: (v) => lastVisible = v,
+                    outLastStyled: (s) => lastStyled = s,
+                    forceFull: false,
+                  );
+                } catch (e) {
+                  // Log tick errors but continue
+                }
+              },
+              onError: (error) {
+                // Handle tick stream errors
+              },
+            );
       }
 
       // Poll for resize
@@ -144,21 +185,36 @@ class TuiRunner {
   }) {
     // Build into buffer
     ctx.clear();
-    app.build(ctx);
+    try {
+      app.build(ctx);
+    } catch (e) {
+      // If build fails, show error message
+      ctx.surface.putText(
+        0,
+        0,
+        'Build Error: ${e.toString().substring(0, (ctx.width - 12).clamp(10, 100))}',
+      );
+    }
+
     final frameVisible = ctx.snapshot();
     final frameStyled = ctx.snapshotStyled();
 
-    // Diff and render changes: update if visible OR style changed
+    // Diff and render changes: update if visible OR style changed OR forcing full redraw
     for (var r = 0; r < frameVisible.length; r++) {
       final lineV = frameVisible[r];
       final prevV = (refLastVisible != null && r < refLastVisible.length)
           ? refLastVisible[r]
           : null;
       final lineS = frameStyled[r];
-      final prevS =
-          (refLastStyled != null && r < refLastStyled.length) ? refLastStyled[r] : null;
+      final prevS = (refLastStyled != null && r < refLastStyled.length)
+          ? refLastStyled[r]
+          : null;
 
-      if (forceFull || prevV == null || prevS == null || prevV != lineV || prevS != lineS) {
+      if (forceFull ||
+          prevV == null ||
+          prevS == null ||
+          prevV != lineV ||
+          prevS != lineS) {
         terminal.setCursor(r, 0);
         terminal.write(lineS);
       }

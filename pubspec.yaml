@@ -1,7 +1,7 @@
 name: utopia_tui
-description: A starting point for Dart libraries or applications.
+description: A comprehensive, high-performance Terminal User Interface (TUI) library for Dart that makes building beautiful console applications effortless.
 version: 1.0.0
-# repository: https://github.com/my_org/my_repo
+homepage: https://github.com/utopia-dart/utopia-tui
 
 environment:
   sdk: ^3.9.0

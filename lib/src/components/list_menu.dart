@@ -8,8 +8,13 @@ class TuiList {
   final TuiStyle? selectedStyle;
   final TuiStyle? unselectedStyle;
 
-  TuiList(this.items, {this.selectedIndex = 0, TuiTheme? theme, this.selectedStyle, this.unselectedStyle})
-      : theme = theme ?? const TuiTheme();
+  TuiList(
+    this.items, {
+    this.selectedIndex = 0,
+    TuiTheme? theme,
+    this.selectedStyle,
+    this.unselectedStyle,
+  }) : theme = theme ?? const TuiTheme();
 
   void moveUp() {
     if (selectedIndex > 0) selectedIndex--;
@@ -24,10 +29,13 @@ class TuiList {
     for (var i = 0; i < height; i++) {
       if (i < items.length) {
         final isSel = i == selectedIndex;
-        final prefix = isSel ? theme.listSelectedPrefix : theme.listUnselectedPrefix;
+        final prefix = isSel
+            ? theme.listSelectedPrefix
+            : theme.listUnselectedPrefix;
         var label = ' $prefix ${items[i]} ';
         if (isSel && selectedStyle != null) label = selectedStyle!.apply(label);
-        if (!isSel && unselectedStyle != null) label = unselectedStyle!.apply(label);
+        if (!isSel && unselectedStyle != null)
+          label = unselectedStyle!.apply(label);
         out.add(label);
       } else {
         out.add('');
