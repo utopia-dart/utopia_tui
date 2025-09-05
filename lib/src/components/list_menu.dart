@@ -34,8 +34,9 @@ class TuiList {
             : theme.listUnselectedPrefix;
         var label = ' $prefix ${items[i]} ';
         if (isSel && selectedStyle != null) label = selectedStyle!.apply(label);
-        if (!isSel && unselectedStyle != null)
+        if (!isSel && unselectedStyle != null) {
           label = unselectedStyle!.apply(label);
+        }
         out.add(label);
       } else {
         out.add('');

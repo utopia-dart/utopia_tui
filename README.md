@@ -1,23 +1,3 @@
-<!-- 
-This README describes the package. If you publish this package to pub.dev,
-this README's contents appear on the landing page for your package.
-
-For information about how to write a good package README, see the guide for
-[writing package pages](https://dart.dev/tools/pub/writing-package-pages). 
-
-For general information about developing packages, see the Dart guide for
-[creating packages](https://dart.dev/guides/libraries/create-packages)
-and the Flutter guide for
-[developing packages and plugins](https://flutter.dev/to/develop-packages). 
--->
-
-TODO: Put a short description of the package here that helps potential users
-know whether this package might be useful for them.
-
-## Features
-
-TODO: List what your package can do. Maybe include images, gifs, or videos.
-
 # Utopia TUI - A Powerful Dart Terminal UI Library 🚀
 
 A comprehensive, high-performance Terminal User Interface (TUI) library for Dart that makes building beautiful console applications effortless.
@@ -320,15 +300,26 @@ Transform your console applications from boring command-line tools into beautifu
 
 ## Usage
 
-TODO: Include short and useful examples for package users. Add longer examples
-to `/example` folder. 
+Check out the comprehensive example in `/example/example.dart` to see all components in action.
 
 ```dart
-const like = 'sample';
+import 'package:utopia_tui/utopia_tui.dart';
+
+class MyApp extends TuiApp {
+  @override
+  void build(TuiContext context) {
+    TuiPanelBox(
+      title: 'Hello World',
+      child: TuiText('Welcome to Utopia TUI!'),
+    ).paintSurface(context.surface, context.rect);
+  }
+}
+
+void main() async {
+  await TuiRunner(MyApp()).run();
+}
 ```
 
-## Additional information
+## Contributing
 
-TODO: Tell users more about the package: where to find more information, how to 
-contribute to the package, how to file issues, what response they can expect 
-from the package authors, and more.
+Contributions are welcome! Please feel free to submit issues and pull requests.
