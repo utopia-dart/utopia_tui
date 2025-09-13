@@ -7,10 +7,26 @@ import 'events.dart';
 import 'context.dart';
 import 'terminal.dart';
 
-// Runner orchestrates input, ticks, resize detection and rendering
-
+/// Application runner that orchestrates the TUI event loop and rendering.
+///
+/// The [TuiRunner] is responsible for:
+/// - Setting up the terminal environment
+/// - Managing the event loop (keyboard input, resize events, ticks)
+/// - Coordinating between events and UI updates
+/// - Handling cleanup when the application exits
+///
+/// ## Usage
+///
+/// ```dart
+/// final app = MyApp();
+/// final runner = TuiRunner(app);
+/// await runner.run(); // Blocks until app exits
+/// ```
 class TuiRunner {
+  /// The TUI application to run.
   final TuiApp app;
+
+  /// Terminal interface for low-level operations.
   final TuiTerminalInterface terminal;
 
   StreamSubscription? _tickSub;
@@ -24,9 +40,26 @@ class TuiRunner {
   int _lastWidth = 0;
   int _lastHeight = 0;
 
+  /// Creates a new TUI runner for the given [app].
+  ///
+  /// Optionally specify a custom [terminal] interface for testing or
+  /// alternative terminal implementations. If not provided, uses the
+  /// default [TuiTerminal].
   TuiRunner(this.app, {TuiTerminalInterface? terminal})
     : terminal = terminal ?? TuiTerminal();
 
+  /// Runs the TUI application until it exits.
+  ///
+  /// This method:
+  /// 1. Initializes the terminal and application
+  /// 2. Sets up event listeners for keyboard input and terminal resize
+  /// 3. Starts the main event loop
+  /// 4. Handles cleanup when the application exits
+  ///
+  /// The method returns when the user presses Ctrl+C or the application
+  /// explicitly calls [stop].
+  ///
+  /// Throws exceptions if terminal setup fails or other critical errors occur.
   Future<void> run() async {
     var ctx = TuiContext(terminal);
     List<String>? lastVisible;

@@ -1,26 +1,51 @@
 import 'style.dart';
 
-/// A single cell in the terminal, containing a character and its style
+/// Represents a single character cell in the terminal with its styling.
+///
+/// Each cell contains a character (stored as a Unicode code point) and
+/// associated styling information. This is the fundamental unit of the
+/// terminal display system.
+///
+/// ## Usage
+///
+/// ```dart
+/// // Create a styled character cell
+/// final cell = TuiCell.fromChar('A', style: TuiStyle(fg: 1, bold: true));
+///
+/// // Create an empty cell
+/// final empty = TuiCell.empty();
+///
+/// // Check cell properties
+/// print(cell.char); // 'A'
+/// print(cell.isEmpty); // false
+/// ```
 class TuiCell {
+  /// The Unicode code point of the character in this cell.
   final int codePoint;
+
+  /// The styling applied to this character.
   final TuiStyle style;
 
+  /// Creates a cell with the specified [codePoint] and optional [style].
   const TuiCell({required this.codePoint, this.style = const TuiStyle()});
 
-  /// Create a cell from a string character
+  /// Creates a cell from a string [char] with optional [style].
+  ///
+  /// If [char] is empty, defaults to a space character (code point 32).
+  /// If [char] has multiple characters, only the first is used.
   TuiCell.fromChar(String char, {this.style = const TuiStyle()})
     : codePoint = char.isNotEmpty ? char.codeUnitAt(0) : 32;
 
-  /// Create an empty cell (space)
+  /// Creates an empty cell (space character) with optional [style].
   const TuiCell.empty({this.style = const TuiStyle()}) : codePoint = 32;
 
-  /// Get the character as a string
+  /// The character as a string.
   String get char => String.fromCharCode(codePoint);
 
-  /// Check if this is an empty/space cell
+  /// Whether this cell contains a space character.
   bool get isEmpty => codePoint == 32;
 
-  /// Apply a style to this cell
+  /// Creates a copy of this cell with a different [newStyle].
   TuiCell withStyle(TuiStyle newStyle) {
     return TuiCell(codePoint: codePoint, style: newStyle);
   }
@@ -37,12 +62,45 @@ class TuiCell {
   int get hashCode => codePoint.hashCode ^ style.hashCode;
 }
 
-/// A 2D surface of cells that represents the terminal screen
+/// A 2D grid of character cells representing the terminal screen buffer.
+///
+/// The surface provides efficient character-based rendering operations
+/// with automatic styling and clipping. It serves as the main drawing
+/// canvas for all TUI components.
+///
+/// ## Key Features
+///
+/// - Character-level precision for terminal UIs
+/// - Automatic ANSI escape sequence generation
+/// - Efficient bulk operations and clipping
+/// - Style inheritance and merging
+///
+/// ## Usage
+///
+/// ```dart
+/// final surface = TuiSurface(width: 80, height: 24);
+///
+/// // Write text
+/// surface.putText(0, 0, 'Hello World');
+///
+/// // Write styled text
+/// surface.putText(0, 1, 'Error', style: TuiStyle(fg: 1));
+///
+/// // Get output lines
+/// final lines = surface.toAnsiLines();
+/// ```
 class TuiSurface {
+  /// Width of the surface in characters.
   final int width;
+
+  /// Height of the surface in rows.
   final int height;
+
   late final List<List<TuiCell>> _grid;
 
+  /// Creates a surface with the specified dimensions.
+  ///
+  /// The surface is initialized with empty cells (spaces with no styling).
   TuiSurface({required this.width, required this.height}) {
     _grid = List.generate(
       height,

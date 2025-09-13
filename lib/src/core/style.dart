@@ -1,12 +1,50 @@
-// Simple styling utilities built on ANSI escape sequences.
+/// Text styling utilities built on ANSI escape sequences.
+///
+/// The [TuiStyle] class provides a convenient way to apply colors, formatting,
+/// and other visual attributes to text in terminal applications.
+library;
 
+/// Represents text styling options including colors and formatting.
+///
+/// Supports 256-color palette for both foreground and background colors,
+/// plus common text formatting like bold, italic, and underline.
+///
+/// ## Color Values
+///
+/// Colors are specified as integers from 0-255:
+/// - 0-15: Standard colors (black, red, green, etc.)
+/// - 16-231: 216-color cube (6×6×6)
+/// - 232-255: Grayscale ramp
+///
+/// ## Usage Examples
+///
+/// ```dart
+/// // Red text on black background
+/// const style = TuiStyle(fg: 1, bg: 0);
+///
+/// // Bold blue text
+/// const style = TuiStyle(fg: 4, bold: true);
+///
+/// // Apply styling to text
+/// final styledText = style.apply('Hello World');
+/// ```
 class TuiStyle {
-  final int? fg; // 0..255 8-bit color
-  final int? bg; // 0..255 8-bit color
+  /// Foreground color (0-255), or null for default.
+  final int? fg;
+
+  /// Background color (0-255), or null for default.
+  final int? bg;
+
+  /// Whether text should be rendered in bold.
   final bool bold;
+
+  /// Whether text should be rendered in italic.
   final bool italic;
+
+  /// Whether text should be underlined.
   final bool underline;
 
+  /// Creates a new text style with the specified properties.
   const TuiStyle({
     this.fg,
     this.bg,
@@ -15,6 +53,10 @@ class TuiStyle {
     this.underline = false,
   });
 
+  /// Creates a new style by merging this style with [other].
+  ///
+  /// Properties from [other] take precedence over properties from this style.
+  /// Boolean properties (bold, italic, underline) are combined with logical OR.
   TuiStyle merge(TuiStyle other) => TuiStyle(
     fg: other.fg ?? fg,
     bg: other.bg ?? bg,
@@ -23,6 +65,9 @@ class TuiStyle {
     underline: underline || other.underline,
   );
 
+  /// Creates a copy of this style with the specified properties changed.
+  ///
+  /// Any properties not specified will retain their current values.
   TuiStyle copyWith({
     int? fg,
     int? bg,
@@ -37,6 +82,10 @@ class TuiStyle {
     underline: underline ?? this.underline,
   );
 
+  /// Applies this style to the given [text] using ANSI escape sequences.
+  ///
+  /// Returns the text wrapped with appropriate ANSI codes for styling.
+  /// The text will be automatically reset to default styling at the end.
   String apply(String text) {
     final buf = StringBuffer();
     if (bold || italic || underline || fg != null || bg != null) {

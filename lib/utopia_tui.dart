@@ -1,6 +1,28 @@
-/// Support for doing something awesome.
+/// A comprehensive, high-performance Terminal User Interface (TUI) library for Dart.
 ///
-/// More dartdocs go here.
+/// This library provides a complete framework for building beautiful console applications
+/// with rich components, flexible layouts, theming support, and event handling.
+///
+/// ## Quick Start
+///
+/// ```dart
+/// import 'package:utopia_tui/utopia_tui.dart';
+///
+/// class MyApp extends TuiApp {
+///   @override
+///   void build(TuiContext context) {
+///     TuiPanelBox(
+///       title: ' Hello TUI! ',
+///       child: TuiText('Welcome to Utopia TUI!'),
+///     ).paint(context, row: 2, col: 2, width: 30, height: 10);
+///   }
+/// }
+///
+/// void main() async {
+///   final runner = TuiRunner(MyApp());
+///   await runner.run();
+/// }
+/// ```
 library;
 
 // Core TUI framework

@@ -4,19 +4,32 @@ import '../core/rect.dart';
 import '../core/style.dart';
 import 'list_menu.dart';
 
-/// View component for rendering TuiList
+/// A surface-based view component for rendering [TuiList].
+///
+/// This component handles the visual presentation of a [TuiList] on a
+/// [TuiSurface], applying proper styling and positioning. It renders
+/// the list items with appropriate prefixes and selection highlighting.
+///
+/// ## Usage
+///
+/// ```dart
+/// final list = TuiList(['Item 1', 'Item 2', 'Item 3']);
+/// final listView = TuiListView(list);
+/// listView.paintSurface(surface, rect);
+/// ```
 class TuiListView extends TuiComponent {
+  /// The list model to render.
   final TuiList list;
+
+  /// Creates a list view for the given [list].
   TuiListView(this.list);
 
   @override
   void paintSurface(TuiSurface surface, TuiRect rect) {
     if (rect.isEmpty) return;
 
-    // Clear the area
     surface.clearRect(rect.x, rect.y, rect.width, rect.height);
 
-    // Render list items directly to surface with proper styling
     final theme = list.theme;
     for (var i = 0; i < rect.height && i < list.items.length; i++) {
       final isSel = i == list.selectedIndex;

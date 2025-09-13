@@ -5,10 +5,38 @@ import '../core/theme.dart';
 import '../core/canvas.dart';
 import '../core/rect.dart';
 
+/// A layout component that arranges child components horizontally.
+///
+/// Children are laid out from left to right with configurable widths
+/// and optional gaps between them. Widths can be fixed (positive values)
+/// or flexible (negative values for proportional sizing).
+///
+/// ## Usage
+///
+/// ```dart
+/// TuiRow(
+///   children: [widget1, widget2, widget3],
+///   widths: [10, -1, 5], // 10 chars, flexible, 5 chars
+///   gap: 1, // 1 character gap between children
+/// )
+/// ```
 class TuiRow extends TuiComponent {
+  /// The child components to lay out horizontally.
   final List<TuiComponent> children;
-  final List<int> widths; // >=0 fixed, <0 flex
+
+  /// Width specifications for each child.
+  ///
+  /// Positive values specify fixed widths in characters.
+  /// Negative values specify flexible sizing (proportional to absolute value).
+  final List<int> widths;
+
+  /// Gap in characters between child components.
   final int gap;
+
+  /// Creates a horizontal layout with the given [children] and [widths].
+  ///
+  /// The [children] and [widths] lists must have the same length.
+  /// An optional [gap] can be specified between children (default 0).
   TuiRow({required this.children, required this.widths, this.gap = 0})
     : assert(children.length == widths.length);
 
@@ -16,7 +44,6 @@ class TuiRow extends TuiComponent {
   void paintSurface(TuiSurface surface, TuiRect rect) {
     if (rect.isEmpty || children.isEmpty) return;
 
-    // Clear the area
     surface.clearRect(rect.x, rect.y, rect.width, rect.height);
 
     final splits = TuiLayout.splitH(rect.width, widths, gap: gap);
@@ -35,10 +62,38 @@ class TuiRow extends TuiComponent {
   }
 }
 
+/// A layout component that arranges child components vertically.
+///
+/// Children are laid out from top to bottom with configurable heights
+/// and optional gaps between them. Heights can be fixed (positive values)
+/// or flexible (negative values for proportional sizing).
+///
+/// ## Usage
+///
+/// ```dart
+/// TuiColumn(
+///   children: [header, content, footer],
+///   heights: [3, -1, 2], // 3 rows, flexible, 2 rows
+///   gap: 1, // 1 row gap between children
+/// )
+/// ```
 class TuiColumn extends TuiComponent {
+  /// The child components to lay out vertically.
   final List<TuiComponent> children;
-  final List<int> heights; // >=0 fixed, <0 flex
+
+  /// Height specifications for each child.
+  ///
+  /// Positive values specify fixed heights in rows.
+  /// Negative values specify flexible sizing (proportional to absolute value).
+  final List<int> heights;
+
+  /// Gap in rows between child components.
   final int gap;
+
+  /// Creates a vertical layout with the given [children] and [heights].
+  ///
+  /// The [children] and [heights] lists must have the same length.
+  /// An optional [gap] can be specified between children (default 0).
   TuiColumn({required this.children, required this.heights, this.gap = 0})
     : assert(children.length == heights.length);
 
@@ -46,7 +101,6 @@ class TuiColumn extends TuiComponent {
   void paintSurface(TuiSurface surface, TuiRect rect) {
     if (rect.isEmpty || children.isEmpty) return;
 
-    // Clear the area
     surface.clearRect(rect.x, rect.y, rect.width, rect.height);
 
     final splits = TuiLayout.splitV(rect.height, heights, gap: gap);
@@ -65,16 +119,38 @@ class TuiColumn extends TuiComponent {
   }
 }
 
+/// A component that displays text content with optional styling.
+///
+/// Supports multiline text with automatic line breaking on newlines.
+/// Text is clipped to the available rectangle and styled with ANSI
+/// escape sequences if a style is provided.
+///
+/// ## Usage
+///
+/// ```dart
+/// // Simple text
+/// TuiText('Hello World')
+///
+/// // Styled text
+/// TuiText('Error message', style: TuiStyle(fg: 1, bold: true))
+///
+/// // Multiline text
+/// TuiText('Line 1\nLine 2\nLine 3')
+/// ```
 class TuiText extends TuiComponent {
+  /// The text content to display.
   final String text;
+
+  /// Optional styling to apply to the text.
   final TuiStyle? style;
+
+  /// Creates a text component with the given [text] and optional [style].
   TuiText(this.text, {this.style});
 
   @override
   void paintSurface(TuiSurface surface, TuiRect rect) {
     if (rect.isEmpty) return;
 
-    // Clear the area
     surface.clearRect(rect.x, rect.y, rect.width, rect.height);
 
     final lines = text.split(RegExp(r"\r?\n"));
@@ -91,24 +167,54 @@ class TuiText extends TuiComponent {
   }
 }
 
+/// A component that generates lines of text dynamically using a builder function.
+///
+/// This is useful for content that needs to be computed based on the available
+/// space, such as data tables, formatted lists, or dynamically sized content.
+/// The builder function receives the available dimensions and returns the
+/// appropriate lines of text.
+///
+/// ## Usage
+///
+/// ```dart
+/// TuiLines((width, height) {
+///   final lines = <String>[];
+///   for (int i = 0; i < height; i++) {
+///     lines.add('Line $i (max width: $width)');
+///   }
+///   return lines;
+/// })
+/// ```
 class TuiLines extends TuiComponent {
+  /// Function that builds the lines based on available space.
+  ///
+  /// Called each time the component needs to render, receiving the
+  /// available width and height in characters.
   final List<String> Function(int width, int height) builder;
+
+  /// Whether to strip ANSI escape codes from the generated lines.
+  ///
+  /// If true, any ANSI escape sequences in the generated text will be
+  /// removed before rendering. This is useful when the builder generates
+  /// pre-styled text but you want plain text output.
   final bool stripAnsiCodes;
 
+  /// Creates a lines component with the given [builder] function.
+  ///
+  /// Set [stripAnsiCodes] to false if the builder generates plain text
+  /// or if you want to preserve ANSI styling in the output.
   TuiLines(this.builder, {this.stripAnsiCodes = true});
 
   @override
   void paintSurface(TuiSurface surface, TuiRect rect) {
     if (rect.isEmpty) return;
 
-    // Clear the area
     surface.clearRect(rect.x, rect.y, rect.width, rect.height);
 
     final lines = builder(rect.width, rect.height);
     for (var i = 0; i < rect.height && i < lines.length; i++) {
       var line = lines[i];
 
-      // Strip ANSI escape codes if requested
       if (stripAnsiCodes) {
         line = line.replaceAll(RegExp(r'\x1B\[[0-9;]*[mK]'), '');
       }
@@ -118,9 +224,29 @@ class TuiLines extends TuiComponent {
   }
 }
 
+/// A container component with borders and an optional title.
+///
+/// Creates a rectangular panel with borders around the child content.
+/// The borders are drawn using the theme's border characters, and an
+/// optional title can be displayed in the top border.
+///
+/// ## Usage
+///
+/// ```dart
+/// TuiPanelBox(
+///   title: ' Settings ',
+///   child: TuiText('Panel content here'),
+///   theme: TuiTheme.dark,
+/// )
+/// ```
 class TuiPanelBox extends TuiComponent {
+  /// The title to display in the top border (optional).
   final String title;
+
+  /// The child component to display inside the panel.
   final TuiComponent child;
+
+  /// The theme to use for border styling.
   final TuiTheme? theme;
   final TuiStyle? borderStyle;
   final TuiStyle? titleStyle;
