@@ -1,3 +1,7 @@
+## [1.1.0]
+
+- Dialog support with modal overlays
+
 ## [1.0.0]
 
 ### Added
