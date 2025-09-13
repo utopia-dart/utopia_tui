@@ -249,6 +249,53 @@ class TwoPanelLayout extends TuiComponent {
   }
 }
 
+/// Example of TuiTextComponent for building text-based content
+class HelpTextComponent extends TuiTextComponent {
+  final String title;
+  final List<String> helpLines;
+
+  HelpTextComponent({required this.title, required this.helpLines});
+
+  @override
+  List<String> buildLines(int width, int height) {
+    final lines = <String>[];
+
+    // Add title with underline
+    lines.add(title);
+    lines.add('=' * title.length);
+    lines.add('');
+
+    // Add help content, wrapping long lines if needed
+    for (final helpLine in helpLines) {
+      if (helpLine.isEmpty) {
+        lines.add('');
+      } else if (helpLine.length <= width) {
+        lines.add(helpLine);
+      } else {
+        // Simple word wrapping
+        final words = helpLine.split(' ');
+        var currentLine = '';
+        for (final word in words) {
+          if (currentLine.isEmpty) {
+            currentLine = word;
+          } else if (currentLine.length + 1 + word.length <= width) {
+            currentLine += ' $word';
+          } else {
+            lines.add(currentLine);
+            currentLine = word;
+          }
+        }
+        if (currentLine.isNotEmpty) {
+          lines.add(currentLine);
+        }
+      }
+    }
+
+    // Return only what fits in the available height
+    return lines.take(height).toList();
+  }
+}
+
 // =============================================================================
 // MAIN APPLICATION - Composed of reusable components
 // =============================================================================
@@ -588,14 +635,28 @@ class DemoApp extends TuiApp {
         content = interactiveScrollView;
         title = ' README ';
       } else {
-        content = TuiText(
-          'Key bindings:\n'
-          ' h/l: tabs left/right when tabs focused\n'
-          ' j/k: focus Tabs ↔ Content\n'
-          ' 1/2/3: quick tab switching\n'
-          ' t or d: toggle theme (dark/light)\n'
-          ' e: enter component mode (scroll/edit)\n'
-          ' Ctrl+C: quit',
+        content = HelpTextComponent(
+          title: 'Key Bindings',
+          helpLines: [
+            'Navigation:',
+            ' h/l: tabs left/right when tabs focused',
+            ' j/k: focus Tabs ↔ Content',
+            ' 1/2/3: quick tab switching',
+            '',
+            'Component Interaction:',
+            ' e: enter component mode (scroll/edit)',
+            ' j/k: scroll up/down in scroll mode',
+            ' arrow keys: also scroll in scroll mode',
+            ' ESC: exit component mode',
+            '',
+            'Application:',
+            ' t or d: toggle theme (dark/light)',
+            ' Ctrl+C: quit',
+            '',
+            'This demonstrates the TuiTextComponent pattern',
+            'for building text-based help content that',
+            'automatically wraps and fits the available space.',
+          ],
         );
         title = ' Key Bindings ';
       }

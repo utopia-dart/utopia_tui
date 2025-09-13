@@ -4,9 +4,6 @@ import '../core/style.dart';
 import '../core/theme.dart';
 import '../core/canvas.dart';
 import '../core/rect.dart';
-import 'list_menu.dart';
-import 'text_input.dart';
-import 'scroll_view.dart';
 
 class TuiRow extends TuiComponent {
   final List<TuiComponent> children;
@@ -222,99 +219,6 @@ class TuiPanelBox extends TuiComponent {
       } else {
         child.paintSurface(surface, innerRect);
       }
-    }
-  }
-}
-
-class TuiListView extends TuiComponent {
-  final TuiList list;
-  TuiListView(this.list);
-
-  @override
-  void paintSurface(TuiSurface surface, TuiRect rect) {
-    if (rect.isEmpty) return;
-
-    // Clear the area
-    surface.clearRect(rect.x, rect.y, rect.width, rect.height);
-
-    // Render list items directly to surface with proper styling
-    final theme = list.theme;
-    for (var i = 0; i < rect.height && i < list.items.length; i++) {
-      final isSel = i == list.selectedIndex;
-      final prefix = isSel
-          ? theme.listSelectedPrefix
-          : theme.listUnselectedPrefix;
-      final item = list.items[i];
-      final text = ' $prefix $item ';
-      final style = isSel
-          ? (list.selectedStyle ?? const TuiStyle())
-          : (list.unselectedStyle ?? const TuiStyle());
-
-      surface.putTextClip(rect.x, rect.y + i, text, rect.width, style: style);
-    }
-  }
-}
-
-class TuiTextInputView extends TuiComponent {
-  final TuiTextInput input;
-  TuiTextInputView(this.input);
-
-  @override
-  void paintSurface(TuiSurface surface, TuiRect rect) {
-    if (rect.isEmpty) return;
-
-    // Clear the area
-    surface.clearRect(rect.x, rect.y, rect.width, rect.height);
-
-    final text = input.text;
-    final idx = input.cursor.clamp(0, text.length);
-
-    // Draw the box if enabled
-    int textStartX = rect.x;
-    if (input.showBox) {
-      surface.putChar(rect.x, rect.y, '[');
-      textStartX = rect.x + 1;
-      if (rect.width > 2) {
-        surface.putChar(rect.x + rect.width - 1, rect.y, ']');
-      }
-    }
-
-    final availableWidth = rect.width - (input.showBox ? 2 : 0);
-    if (availableWidth > 0) {
-      // Draw the complete text first
-      surface.putTextClip(textStartX, rect.y, text, availableWidth);
-
-      // Then draw cursor over the appropriate character
-      if (idx < availableWidth) {
-        final cursorChar = input.blinkOn
-            ? '_'
-            : (idx < text.length ? text[idx] : ' ');
-        final cursorStyle = input.cursorStyle ?? const TuiStyle(bold: true);
-        surface.putChar(
-          textStartX + idx,
-          rect.y,
-          cursorChar,
-          style: cursorStyle,
-        );
-      }
-    }
-  }
-}
-
-class TuiScrollViewView extends TuiComponent {
-  final TuiScrollView scroll;
-  TuiScrollViewView(this.scroll);
-
-  @override
-  void paintSurface(TuiSurface surface, TuiRect rect) {
-    if (rect.isEmpty) return;
-
-    // Clear the area
-    surface.clearRect(rect.x, rect.y, rect.width, rect.height);
-
-    final lines = scroll.render(rect.width, rect.height);
-    for (var i = 0; i < rect.height && i < lines.length; i++) {
-      surface.putTextClip(rect.x, rect.y + i, lines[i], rect.width);
     }
   }
 }
