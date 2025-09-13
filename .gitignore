@@ -5,4 +5,29 @@
 # Avoid committing pubspec.lock for library packages; see
 # https://dart.dev/guides/libraries/private-files#pubspeclock.
 pubspec.lock
+
+# Test and coverage reports
+coverage/
+test_coverage.json
+lcov.info
+
+# IDE files
+.vscode/
+.idea/
+*.iml
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Build artifacts
+build/
+*.exe
+
+# Temporary files
 tmp_console_head.txt
+*.tmp
+*.temp
+
+# Documentation build
+doc/api/

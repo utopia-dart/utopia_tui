@@ -1,56 +1,82 @@
 import 'terminal.dart';
+import 'canvas.dart';
+import 'rect.dart';
 
-/// Build context that draws into an in-memory frame buffer.
+/// Build context that provides access to terminal state and rendering surface.
+///
+/// The [TuiContext] is passed to applications during the build phase and
+/// provides access to:
+/// - Terminal dimensions ([width], [height])
+/// - Main rendering surface ([surface])
+/// - Utility methods for clearing and capturing output
+///
+/// ## Usage
+///
+/// ```dart
+/// void build(TuiContext context) {
+///   context.surface.putText(0, 0, 'Hello World');
+///   // or use the rect property
+///   final fullScreen = context.rect;
+/// }
+/// ```
 class TuiContext {
+  /// The underlying terminal interface.
   final TuiTerminalInterface terminal;
-  late final int width;
-  late final int height;
-  late final List<List<int>> _buf; // rows of code units
 
+  /// Width of the terminal in characters.
+  late final int width;
+
+  /// Height of the terminal in characters.
+  late final int height;
+
+  late final TuiSurface _surface;
+
+  /// Creates a new context for the given [terminal].
+  ///
+  /// The context will query the terminal for its current dimensions
+  /// and create an appropriately sized rendering surface.
   TuiContext(this.terminal) {
     width = terminal.width;
     height = terminal.height;
-    _buf = List.generate(height, (_) => List<int>.filled(width, 32)); // space
+    _surface = TuiSurface(width: width, height: height);
   }
 
-  /// Clear the backing buffer to spaces.
+  /// The main rendering surface for painting UI elements.
+  ///
+  /// Use this surface to draw text, apply styles, and render components.
+  /// The surface automatically handles ANSI escape sequences and styling.
+  TuiSurface get surface => _surface;
+
+  /// A rectangle representing the full terminal screen.
+  ///
+  /// Equivalent to `TuiRect(x: 0, y: 0, width: width, height: height)`.
+  /// Useful for components that need to fill the entire screen.
+  TuiRect get rect => TuiRect(x: 0, y: 0, width: width, height: height);
+
+  /// Clears the entire surface to empty cells.
+  ///
+  /// This resets all characters to spaces and removes all styling.
   void clear() {
-    for (var r = 0; r < height; r++) {
-      final row = _buf[r];
-      for (var c = 0; c < width; c++) {
-        row[c] = 32;
-      }
-    }
+    _surface.clear();
   }
 
-  /// Writes text at [row],[col]. Clips to the screen width.
-  void writeAt(int row, int col, String text) {
-    if (row < 0 || row >= height || col >= width) return;
-    final codes = text.codeUnits;
-    for (var i = 0; i < codes.length; i++) {
-      final x = col + i;
-      if (x < 0 || x >= width) break;
-      _buf[row][x] = codes[i];
-    }
+  /// Captures the current surface content as ANSI-formatted strings.
+  ///
+  /// Returns a list of strings, one per terminal row, with ANSI escape
+  /// sequences for styling and colors.
+  /// Captures the current surface content as ANSI-formatted strings.
+  ///
+  /// Returns a list of strings, one per terminal row, with ANSI escape
+  /// sequences for styling and colors.
+  List<String> snapshot() {
+    return _surface.toAnsiLines();
   }
 
-  /// Writes exactly [w] characters at [row],[col], padding/clipping as needed.
-  void writeRow(int row, int col, int w, String text) {
-    if (row < 0 || row >= height || col >= width) return;
-    final widthToWrite = (w).clamp(0, width - col);
-    for (var i = 0; i < widthToWrite; i++) {
-      final x = col + i;
-      if (x < 0 || x >= width) continue;
-      _buf[row][x] = 32;
-    }
-    final clipped = text.length > widthToWrite ? text.substring(0, widthToWrite) : text;
-    writeAt(row, col, clipped);
+  /// Captures the current surface content as styled strings.
+  ///
+  /// This is an alias for [snapshot] since the surface already includes
+  /// styling information in its ANSI output.
+  List<String> snapshotStyled() {
+    return _surface.toAnsiLines();
   }
-
-  /// Returns an immutable snapshot of the buffer as full-width lines.
-  List<String> snapshot() => List<String>.generate(
-        height,
-        (r) => String.fromCharCodes(_buf[r]),
-        growable: false,
-      );
 }

@@ -1,0 +1,74 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  analyze:
+    name: Analyze
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Dart
+      uses: dart-lang/setup-dart@v1
+      with:
+        sdk: stable
+        
+    - name: Get dependencies
+      run: dart pub get
+      
+    - name: Verify formatting
+      run: dart format --output=none --set-exit-if-changed .
+      
+    - name: Analyze project source
+      run: dart analyze --fatal-infos
+      
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    needs: analyze  # Only run tests if analyze passes
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Dart
+      uses: dart-lang/setup-dart@v1
+      with:
+        sdk: stable
+        
+    - name: Get dependencies
+      run: dart pub get
+      
+    - name: Run tests
+      run: dart test --reporter=github
+      
+    - name: Check test coverage
+      run: dart test --coverage=coverage
+      
+    - name: Generate coverage report
+      run: dart run coverage:format_coverage --lcov --in=coverage --out=coverage/lcov.info --packages=.dart_tool/package_config.json --report-on=lib
+      
+  publish-dry-run:
+    name: Publish Dry Run
+    runs-on: ubuntu-latest
+    needs: [analyze, test]  # Only run if both analyze and test pass
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Dart
+      uses: dart-lang/setup-dart@v1
+      with:
+        sdk: stable
+        
+    - name: Get dependencies
+      run: dart pub get
+      
+    - name: Check publish readiness
+      run: dart pub publish --dry-run

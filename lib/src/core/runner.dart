@@ -7,10 +7,26 @@ import 'events.dart';
 import 'context.dart';
 import 'terminal.dart';
 
-// Runner orchestrates input, ticks, resize detection and rendering
-
+/// Application runner that orchestrates the TUI event loop and rendering.
+///
+/// The [TuiRunner] is responsible for:
+/// - Setting up the terminal environment
+/// - Managing the event loop (keyboard input, resize events, ticks)
+/// - Coordinating between events and UI updates
+/// - Handling cleanup when the application exits
+///
+/// ## Usage
+///
+/// ```dart
+/// final app = MyApp();
+/// final runner = TuiRunner(app);
+/// await runner.run(); // Blocks until app exits
+/// ```
 class TuiRunner {
+  /// The TUI application to run.
   final TuiApp app;
+
+  /// Terminal interface for low-level operations.
   final TuiTerminalInterface terminal;
 
   StreamSubscription? _tickSub;
@@ -24,15 +40,40 @@ class TuiRunner {
   int _lastWidth = 0;
   int _lastHeight = 0;
 
+  /// Creates a new TUI runner for the given [app].
+  ///
+  /// Optionally specify a custom [terminal] interface for testing or
+  /// alternative terminal implementations. If not provided, uses the
+  /// default [TuiTerminal].
   TuiRunner(this.app, {TuiTerminalInterface? terminal})
-      : terminal = terminal ?? TuiTerminal();
+    : terminal = terminal ?? TuiTerminal();
 
+  /// Runs the TUI application until it exits.
+  ///
+  /// This method:
+  /// 1. Initializes the terminal and application
+  /// 2. Sets up event listeners for keyboard input and terminal resize
+  /// 3. Starts the main event loop
+  /// 4. Handles cleanup when the application exits
+  ///
+  /// The method returns when the user presses Ctrl+C or the application
+  /// explicitly calls [stop].
+  ///
+  /// Throws exceptions if terminal setup fails or other critical errors occur.
   Future<void> run() async {
     var ctx = TuiContext(terminal);
-    app.init(ctx);
-    List<String>? lastFrame;
+    List<String>? lastVisible;
+    List<String>? lastStyled;
 
     try {
+      // Initialize the app
+      try {
+        app.init(ctx);
+      } catch (e) {
+        // If init fails, we still want to show something useful
+        print('Error during app initialization: $e');
+      }
+
       // Prepare terminal
       terminal.clearScreen();
       terminal.hideCursor();
@@ -44,37 +85,84 @@ class TuiRunner {
       _keyPort = ReceivePort();
       _keyIsolate = await Isolate.spawn(_keyReaderMain, _keyPort!.sendPort);
 
-      // Wire key stream
-      _keySub = _keyPort!.listen((dynamic data) {
-        final ev = _decodeKeyPayload(data);
-        if (ev != null) {
-          if (ev.code == TuiKeyCode.ctrlC) {
-            if (!_stopped) {
-              _stopped = true;
-              _stopCompleter.complete();
+      // Wire key stream with error handling
+      _keySub = _keyPort!.listen(
+        (dynamic data) {
+          final ev = _decodeKeyPayload(data);
+          if (ev != null) {
+            if (ev.code == TuiKeyCode.ctrlC) {
+              if (!_stopped) {
+                _stopped = true;
+                _stopCompleter.complete();
+              }
+              return;
             }
-            return;
-          }
-          try {
-            app.onEvent(ev, ctx);
-            _redraw(ctx, refLast: lastFrame, outLast: (f) => lastFrame = f);
-          } catch (e) {
-            if (!_stopped) {
-              _stopped = true;
-              _stopCompleter.completeError(e);
+            try {
+              app.onEvent(ev, ctx);
+              _redraw(
+                ctx,
+                refLastVisible: lastVisible,
+                refLastStyled: lastStyled,
+                outLastVisible: (v) => lastVisible = v,
+                outLastStyled: (s) => lastStyled = s,
+                forceFull: true,
+              );
+            } catch (e) {
+              // Log the error but don't crash the TUI
+              try {
+                ctx.clear();
+                ctx.surface.putText(
+                  0,
+                  0,
+                  'Error: ${e.toString().substring(0, ctx.width.clamp(0, 100))}',
+                );
+                final frameStyled = ctx.snapshotStyled();
+                for (var r = 0; r < 1; r++) {
+                  terminal.setCursor(r, 0);
+                  terminal.write(frameStyled[r]);
+                }
+              } catch (_) {
+                // If even error display fails, just continue
+              }
             }
           }
-        }
-      });
+        },
+        onError: (error) {
+          // Handle stream errors gracefully
+          if (!_stopped) {
+            _stopped = true;
+            _stopCompleter.completeError('Input stream error: $error');
+          }
+        },
+      );
 
-      // Ticks
+      // Ticks with error handling
       final tickEvery = app.tickInterval;
       if (tickEvery != null) {
-        _tickSub = Stream.periodic(tickEvery, (_) => TuiTickEvent(DateTime.now()))
-            .listen((e) {
-          app.onEvent(e, ctx);
-          _redraw(ctx, refLast: lastFrame, outLast: (f) => lastFrame = f);
-        });
+        _tickSub =
+            Stream.periodic(
+              tickEvery,
+              (_) => TuiTickEvent(DateTime.now()),
+            ).listen(
+              (e) {
+                try {
+                  app.onEvent(e, ctx);
+                  _redraw(
+                    ctx,
+                    refLastVisible: lastVisible,
+                    refLastStyled: lastStyled,
+                    outLastVisible: (v) => lastVisible = v,
+                    outLastStyled: (s) => lastStyled = s,
+                    forceFull: false,
+                  );
+                } catch (e) {
+                  // Log tick errors but continue
+                }
+              },
+              onError: (error) {
+                // Handle tick stream errors
+              },
+            );
       }
 
       // Poll for resize
@@ -90,14 +178,29 @@ class TuiRunner {
           // recreate context with new size and redraw fully
           ctx = TuiContext(terminal);
           app.onEvent(e, ctx);
-          lastFrame = null;
+          lastVisible = null;
+          lastStyled = null;
           terminal.clearScreen();
-          _redraw(ctx, refLast: lastFrame, outLast: (f) => lastFrame = f, forceFull: true);
+          _redraw(
+            ctx,
+            refLastVisible: lastVisible,
+            refLastStyled: lastStyled,
+            outLastVisible: (v) => lastVisible = v,
+            outLastStyled: (s) => lastStyled = s,
+            forceFull: true,
+          );
         }
       });
 
       // Initial draw and wait for stop signal
-      _redraw(ctx, refLast: lastFrame, outLast: (f) => lastFrame = f, forceFull: true);
+      _redraw(
+        ctx,
+        refLastVisible: lastVisible,
+        refLastStyled: lastStyled,
+        outLastVisible: (v) => lastVisible = v,
+        outLastStyled: (s) => lastStyled = s,
+        forceFull: true,
+      );
       _stopCompleter = Completer<void>();
       await _stopCompleter.future;
     } finally {
@@ -107,25 +210,50 @@ class TuiRunner {
 
   void _redraw(
     TuiContext ctx, {
-    List<String>? refLast,
-    required void Function(List<String>) outLast,
+    List<String>? refLastVisible,
+    List<String>? refLastStyled,
+    required void Function(List<String>) outLastVisible,
+    required void Function(List<String>) outLastStyled,
     bool forceFull = false,
   }) {
     // Build into buffer
     ctx.clear();
-    app.build(ctx);
-    final frame = ctx.snapshot();
+    try {
+      app.build(ctx);
+    } catch (e) {
+      // If build fails, show error message
+      ctx.surface.putText(
+        0,
+        0,
+        'Build Error: ${e.toString().substring(0, (ctx.width - 12).clamp(10, 100))}',
+      );
+    }
 
-    // Diff and render changes only
-    for (var r = 0; r < frame.length; r++) {
-      final line = frame[r];
-      final prev = (refLast != null && r < refLast.length) ? refLast[r] : null;
-      if (forceFull || prev == null || prev != line) {
+    final frameVisible = ctx.snapshot();
+    final frameStyled = ctx.snapshotStyled();
+
+    // Diff and render changes: update if visible OR style changed OR forcing full redraw
+    for (var r = 0; r < frameVisible.length; r++) {
+      final lineV = frameVisible[r];
+      final prevV = (refLastVisible != null && r < refLastVisible.length)
+          ? refLastVisible[r]
+          : null;
+      final lineS = frameStyled[r];
+      final prevS = (refLastStyled != null && r < refLastStyled.length)
+          ? refLastStyled[r]
+          : null;
+
+      if (forceFull ||
+          prevV == null ||
+          prevS == null ||
+          prevV != lineV ||
+          prevS != lineS) {
         terminal.setCursor(r, 0);
-        terminal.write(line);
+        terminal.write(lineS);
       }
     }
-    outLast(frame);
+    outLastVisible(frameVisible);
+    outLastStyled(frameStyled);
   }
 
   Future<void> _dispose() async {
@@ -134,7 +262,10 @@ class TuiRunner {
     await _keySub?.cancel();
     _keyPort?.close();
     _keyIsolate?.kill(priority: Isolate.immediate);
+    // Do not clear the screen; restore cursor + attributes and print newline
+    terminal.write('\x1b[0m'); // reset attributes
     terminal.showCursor();
+    terminal.write('\n'); // ensure prompt appears on a new line
   }
 }
 

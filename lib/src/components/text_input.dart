@@ -1,9 +1,28 @@
+import '../core/style.dart';
+
 class TuiTextInput {
   String text;
   int cursor; // 0..text.length
   final int maxLength;
+  final TuiStyle? cursorStyle;
+  bool blinkOn = true;
+  bool showBox = true;
 
-  TuiTextInput({this.text = '', this.cursor = 0, this.maxLength = 256});
+  TuiTextInput({
+    this.text = '',
+    this.cursor = 0,
+    this.maxLength = 256,
+    this.cursorStyle,
+    this.showBox = true,
+  });
+
+  void tick({bool focused = false}) {
+    if (focused) {
+      blinkOn = !blinkOn;
+    } else {
+      blinkOn = true; // keep cursor visible when not focused
+    }
+  }
 
   void insert(String ch) {
     if (text.length >= maxLength) return;
@@ -33,16 +52,22 @@ class TuiTextInput {
   }
 
   String render(int width) {
-    final content = text;
-    final clipped = content.length > width
-        ? content.substring(0, width)
-        : content;
-    // Show cursor as block by inverting the char at position if visible
-    final cur = cursor.clamp(0, width);
-    final before = clipped.substring(0, cur);
-    final current = cur < clipped.length ? clipped[cur] : ' ';
-    final after = cur < clipped.length - 1 ? clipped.substring(cur + 1) : '';
-    final line = '$before[$current]$after'.padRight(width);
-    return line.substring(0, width);
+    // Render whole text inside [ ... ] and show a blinking underscore cursor.
+    var inside = text;
+
+    // Ensure there is a placeholder at cursor position if at end
+    final idx = cursor.clamp(0, inside.length);
+    if (idx == inside.length) inside = '$inside ';
+
+    // Insert a blinking underscore at the cursor position
+    final cursorChar = blinkOn ? '_' : ' ';
+    final styledCursor = (cursorStyle ?? const TuiStyle(bold: true)).apply(
+      cursorChar,
+    );
+    inside =
+        inside.substring(0, idx) + styledCursor + inside.substring(idx + 1);
+
+    final boxed = showBox ? '[$inside]' : inside;
+    return boxed;
   }
 }

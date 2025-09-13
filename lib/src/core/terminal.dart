@@ -32,7 +32,8 @@ class TuiTerminal implements TuiTerminalInterface {
   void clearScreen() => _console.clearScreen();
 
   @override
-  void setCursor(int row, int col) => _console.cursorPosition = dc.Coordinate(row, col);
+  void setCursor(int row, int col) =>
+      _console.cursorPosition = dc.Coordinate(row, col);
 
   @override
   void write(String text) => _console.write(text);
