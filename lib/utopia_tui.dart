@@ -3,6 +3,7 @@
 /// More dartdocs go here.
 library;
 
+// Core TUI framework
 export 'src/core/events.dart';
 export 'src/core/app.dart';
 export 'src/core/runner.dart';
@@ -16,6 +17,8 @@ export 'src/core/layout.dart';
 export 'src/core/bindings.dart';
 export 'src/core/canvas.dart';
 export 'src/core/rect.dart';
+
+// Components
 export 'src/components/list_menu.dart';
 export 'src/components/list_view.dart';
 export 'src/components/text_input.dart';
