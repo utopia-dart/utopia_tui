@@ -157,6 +157,21 @@ class ContentArea extends TuiComponent {
             componentData['interactiveScroll'] as TuiInteractiveScrollView?;
         return interactiveScroll ??
             TuiText('ScrollView component not available');
+      case 'Dialog':
+        return TuiColumn(
+          children: [
+            TuiText('Dialog System Demo'),
+            TuiText(''),
+            TuiText('Keyboard Controls:'),
+            TuiText(' A = Alert Dialog'),
+            TuiText(' S = Confirm Dialog'),
+            TuiText(' F = Input Dialog'),
+            TuiText(' G = Keybindings Dialog'),
+            TuiText(''),
+            TuiText('Press A/S/F/G to show dialogs!'),
+          ],
+          heights: const [1, 1, 1, 1, 1, 1, 1, 1, -1],
+        );
       default:
         return TuiText('Select a component from the menu');
     }
@@ -319,6 +334,7 @@ class DemoApp extends TuiApp {
       'Button',
       'Table',
       'ScrollView',
+      'Dialog',
     ],
     selectedStyle: const TuiStyle(bold: true, fg: 39),
     unselectedStyle: const TuiStyle(fg: 250),
@@ -428,6 +444,14 @@ class DemoApp extends TuiApp {
       return;
     }
 
+    // Handle dialog input first (highest priority)
+    if (context.hasActiveDialog) {
+      if (context.handleDialogInput(event)) {
+        _handleDialogResult(context);
+        return; // Event was consumed
+      }
+    }
+
     // First try to delegate input to focused interactive components
     if (focusLevel == 1) {
       final focusableComponents = currentFocusableComponents;
@@ -439,68 +463,138 @@ class DemoApp extends TuiApp {
     }
 
     // Handle global navigation if no component consumed the event
-    if (event is TuiKeyEvent && event.isPrintable) {
-      final ch = event.char!.toLowerCase();
-
-      // Quick tab switching
-      if (ch == '1') {
-        tabs.index = 0;
-        _updateFocus();
-        return;
-      }
-      if (ch == '2') {
-        tabs.index = 1;
-        _updateFocus();
-        return;
-      }
-      if (ch == '3') {
-        tabs.index = 2;
-        _updateFocus();
-        return;
-      }
-
-      // Theme toggle
-      if (ch == 't' || ch == 'd') {
-        isLightTheme = !isLightTheme;
-        _updateTheme();
-        return;
-      }
-
-      // Focus navigation
-      if (ch == 'j') {
-        focusLevel = 1;
-        _updateFocus();
-        return;
-      }
-      if (ch == 'k') {
-        focusLevel = 0;
-        _updateFocus();
-        return;
-      }
-
-      // Horizontal navigation
-      if (focusLevel == 0) {
-        if (ch == 'h' && tabs.index > 0) {
-          tabs.index--;
+    if (event is TuiKeyEvent) {
+      // Handle special keys first
+      if (event.code == TuiKeyCode.escape) {
+        // ESC key - dismiss any active dialog or exit component mode
+        if (context.hasActiveDialog) {
+          context.dismissDialog();
           _updateFocus();
+          return;
         }
-        if (ch == 'l' && tabs.index < tabs.tabs.length - 1) {
-          tabs.index++;
+        // If not in dialog, exit component focus mode
+        if (focusLevel == 1) {
+          focusLevel = 0;
           _updateFocus();
+          return;
         }
       }
 
-      if (focusLevel == 1 && tabs.index == 0) {
-        if (ch == 'h') {
-          bottomPane = 0;
-          _updateFocus();
+      // Handle printable characters
+      if (event.isPrintable) {
+        final ch = event.char!.toLowerCase();
+
+        // Q key - dismiss any active dialog (alternative to ESC)
+        if (ch == 'q') {
+          if (context.hasActiveDialog) {
+            context.dismissDialog();
+            _updateFocus();
+            return;
+          }
         }
-        if (ch == 'l') {
-          bottomPane = 1;
+
+        // Quick tab switching
+        if (ch == '1') {
+          tabs.index = 0;
           _updateFocus();
+          return;
         }
-      }
-    }
+        if (ch == '2') {
+          tabs.index = 1;
+          _updateFocus();
+          return;
+        }
+        if (ch == '3') {
+          tabs.index = 2;
+          _updateFocus();
+          return;
+        }
+
+        // Theme toggle
+        if (ch == 't' || ch == 'd') {
+          isLightTheme = !isLightTheme;
+          _updateTheme();
+          return;
+        }
+
+        // Dialog shortcuts (only when Dialog is selected)
+        if (tabs.index == 0 &&
+            bottomPane == 1 &&
+            menu.items[menu.selectedIndex] == 'Dialog') {
+          final theme = isLightTheme ? TuiTheme.light : TuiTheme.dark;
+          if (ch == 'a') {
+            context.showAlert(
+              title: 'Alert Dialog',
+              message:
+                  'This is an example alert dialog.\nPress Enter to dismiss.',
+              theme: theme,
+            );
+            return;
+          }
+          if (ch == 's') {
+            context.showConfirm(
+              title: 'Confirm Action',
+              message:
+                  'Are you sure you want to proceed?\nThis action cannot be undone.',
+              confirmText: 'Yes',
+              cancelText: 'No',
+              theme: theme,
+            );
+            return;
+          }
+          if (ch == 'f') {
+            context.showInput(
+              title: 'Enter Your Name',
+              message: 'Please enter your name below:',
+              defaultValue: 'John Doe',
+              confirmText: 'OK',
+              cancelText: 'Cancel',
+              theme: theme,
+            );
+            return;
+          }
+          if (ch == 'g') {
+            _showKeybindingsDialog(context);
+            return;
+          }
+        }
+
+        // Focus navigation
+        if (ch == 'j') {
+          focusLevel = 1;
+          _updateFocus();
+          return;
+        }
+        if (ch == 'k') {
+          focusLevel = 0;
+          _updateFocus();
+          return;
+        }
+
+        // Horizontal navigation
+        if (focusLevel == 0) {
+          if (ch == 'h' && tabs.index > 0) {
+            tabs.index--;
+            _updateFocus();
+          }
+          if (ch == 'l' && tabs.index < tabs.tabs.length - 1) {
+            tabs.index++;
+            _updateFocus();
+          }
+        }
+
+        if (focusLevel == 1 && tabs.index == 0) {
+          if (ch == 'h') {
+            bottomPane = 0;
+            _updateFocus();
+          }
+          if (ch == 'l') {
+            bottomPane = 1;
+            _updateFocus();
+          }
+        }
+      } // End of printable character handling
+    } // End of TuiKeyEvent handling
   }
 
   void _updateFocus() {
@@ -532,6 +626,84 @@ class DemoApp extends TuiApp {
       selectedStyle: theme.accent,
       unselectedStyle: theme.dim,
     );
+  }
+
+  void _showKeybindingsDialog(TuiContext context) {
+    final keybindingsContent = TuiColumn(
+      children: [
+        TuiText('Global Keybindings:'),
+        TuiText(''),
+        TuiText('Navigation:'),
+        TuiText(' j/k = Focus up/down'),
+        TuiText(' h/l = Focus left/right'),
+        TuiText(' 1/2/3 = Switch tabs'),
+        TuiText(''),
+        TuiText('Actions:'),
+        TuiText(' t/d = Toggle theme'),
+        TuiText(' Ctrl+C = Quit'),
+        TuiText(''),
+        TuiText('Dialog Shortcuts (when on Dialog tab):'),
+        TuiText(' A = Show Alert'),
+        TuiText(' S = Show Confirm'),
+        TuiText(' F = Show Input'),
+        TuiText(' G = Show this Help'),
+        TuiText(''),
+        TuiText('Dialog Controls:'),
+        TuiText(' Y/N = Quick Yes/No (confirm dialogs)'),
+        TuiText(' Tab = Navigate dialog buttons'),
+        TuiText(' Enter = Activate focused button'),
+        TuiText(' ESC/Q = Cancel/dismiss dialog'),
+      ],
+      heights: const [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+      ],
+    );
+
+    context.showCustom(
+      title: 'Keybindings Help',
+      content: keybindingsContent,
+      width: 50,
+      height: 26,
+      theme: isLightTheme ? TuiTheme.light : TuiTheme.dark,
+    );
+  }
+
+  void _handleDialogResult(TuiContext context) {
+    if (context.dialogResult != null) {
+      final result = context.dialogResult!;
+      final inputText = context.dialogInputText;
+
+      // You could handle different results here
+      // For now, just dismiss the dialog
+      context.dismissDialog();
+      _updateFocus(); // Restore normal focus
+
+      // Example: show what happened (in a real app you'd do something with the result)
+      if (result == TuiDialogResult.confirmed && inputText.isNotEmpty) {
+        // Could show another dialog or update UI state based on input
+      }
+    }
   }
 
   @override
@@ -649,6 +821,13 @@ class DemoApp extends TuiApp {
             ' arrow keys: also scroll in scroll mode',
             ' ESC: exit component mode',
             '',
+            'Dialog System (on Dialog tab):',
+            ' A/S/F/G: show Alert/Confirm/Input/Help dialogs',
+            ' Y/N: quick yes/no in confirm dialogs',
+            ' Tab: navigate dialog buttons',
+            ' Enter: activate focused button',
+            ' ESC/Q: cancel/dismiss dialog',
+            '',
             'Application:',
             ' t or d: toggle theme (dark/light)',
             ' Ctrl+C: quit',
@@ -672,7 +851,10 @@ class DemoApp extends TuiApp {
       );
     }
 
-    // 4. Status bar
+    // 4. Dialog overlay (render on top of everything)
+    context.renderDialogOverlay();
+
+    // 5. Status bar
     StatusBar(width: w, height: h).paintSurface(
       context.surface,
       TuiRect(x: 0, y: h - 1, width: w, height: 1),

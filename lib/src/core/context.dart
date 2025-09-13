@@ -1,6 +1,9 @@
 import 'terminal.dart';
 import 'canvas.dart';
 import 'rect.dart';
+import 'theme.dart';
+import '../components/dialog.dart';
+import '../components/interactive_dialog.dart';
 
 /// Build context that provides access to terminal state and rendering surface.
 ///
@@ -30,6 +33,9 @@ class TuiContext {
   late final int height;
 
   late final TuiSurface _surface;
+
+  /// Active dialog instance (if any).
+  TuiInteractiveDialog? _activeDialog;
 
   /// Creates a new context for the given [terminal].
   ///
@@ -78,5 +84,179 @@ class TuiContext {
   /// styling information in its ANSI output.
   List<String> snapshotStyled() {
     return _surface.toAnsiLines();
+  }
+
+  // Dialog Management
+  // =================
+
+  /// Returns true if a dialog is currently active.
+  bool get hasActiveDialog => _activeDialog != null;
+
+  /// Returns the active dialog instance, or null if no dialog is active.
+  TuiInteractiveDialog? get activeDialog => _activeDialog;
+
+  /// Shows an alert dialog with the specified title and message.
+  ///
+  /// Example:
+  /// ```dart
+  /// context.showAlert(
+  ///   title: 'Error',
+  ///   message: 'Something went wrong!',
+  ///   theme: TuiTheme.dark,
+  /// );
+  /// ```
+  void showAlert({
+    required String title,
+    required String message,
+    TuiTheme? theme,
+  }) {
+    final dialog = TuiDialog.alert(
+      title: title,
+      message: message,
+      theme: theme ?? TuiTheme.dark,
+    );
+    _activeDialog = TuiInteractiveDialog(dialog);
+    _activeDialog!.focused = true;
+  }
+
+  /// Shows a confirm dialog with Yes/No options.
+  ///
+  /// Example:
+  /// ```dart
+  /// context.showConfirm(
+  ///   title: 'Confirm Action',
+  ///   message: 'Are you sure?',
+  ///   confirmText: 'Yes',
+  ///   cancelText: 'No',
+  ///   theme: TuiTheme.dark,
+  /// );
+  /// ```
+  void showConfirm({
+    required String title,
+    required String message,
+    String confirmText = 'OK',
+    String cancelText = 'Cancel',
+    TuiTheme? theme,
+  }) {
+    final dialog = TuiDialog.confirm(
+      title: title,
+      message: message,
+      confirmText: confirmText,
+      cancelText: cancelText,
+      theme: theme ?? TuiTheme.dark,
+    );
+    _activeDialog = TuiInteractiveDialog(dialog);
+    _activeDialog!.focused = true;
+  }
+
+  /// Shows an input dialog for text entry.
+  ///
+  /// Example:
+  /// ```dart
+  /// context.showInput(
+  ///   title: 'Enter Name',
+  ///   message: 'Please enter your name:',
+  ///   defaultValue: 'John Doe',
+  ///   theme: TuiTheme.dark,
+  /// );
+  /// ```
+  void showInput({
+    required String title,
+    required String message,
+    String defaultValue = '',
+    String confirmText = 'OK',
+    String cancelText = 'Cancel',
+    TuiTheme? theme,
+  }) {
+    final dialog = TuiDialog.input(
+      title: title,
+      message: message,
+      defaultValue: defaultValue,
+      confirmText: confirmText,
+      cancelText: cancelText,
+      theme: theme ?? TuiTheme.dark,
+    );
+    _activeDialog = TuiInteractiveDialog(dialog);
+    _activeDialog!.focused = true;
+  }
+
+  /// Shows a custom dialog with arbitrary content.
+  ///
+  /// Example:
+  /// ```dart
+  /// context.showCustom(
+  ///   title: 'Custom Dialog',
+  ///   content: TuiText('Custom content here'),
+  ///   width: 50,
+  ///   height: 20,
+  ///   theme: TuiTheme.dark,
+  /// );
+  /// ```
+  void showCustom({
+    required String title,
+    required dynamic content,
+    int width = 0,
+    int height = 0,
+    TuiTheme? theme,
+  }) {
+    final dialog = TuiDialog.custom(
+      title: title,
+      content: content,
+      width: width,
+      height: height,
+      theme: theme ?? TuiTheme.dark,
+    );
+    _activeDialog = TuiInteractiveDialog(dialog);
+    _activeDialog!.focused = true;
+  }
+
+  /// Dismisses the currently active dialog.
+  void dismissDialog() {
+    _activeDialog?.focused = false;
+    _activeDialog = null;
+  }
+
+  /// Returns the result of the active dialog, or null if no result yet.
+  ///
+  /// The result will be null while the dialog is still active.
+  /// Check this in your event handling to see when the user has responded.
+  TuiDialogResult? get dialogResult => _activeDialog?.result;
+
+  /// For input dialogs, returns the entered text.
+  String get dialogInputText => _activeDialog?.inputText ?? '';
+
+  /// Handles dialog input events. Returns true if the event was consumed.
+  ///
+  /// Call this from your app's onEvent method to handle dialog input:
+  /// ```dart
+  /// void onEvent(TuiEvent event, TuiContext context) {
+  ///   if (context.handleDialogInput(event)) {
+  ///     return; // Event was consumed by dialog
+  ///   }
+  ///   // Handle other events...
+  /// }
+  /// ```
+  bool handleDialogInput(dynamic event) {
+    if (_activeDialog?.focused == true) {
+      return _activeDialog!.handleInput(event);
+    }
+    return false;
+  }
+
+  /// Renders the active dialog overlay if one exists.
+  ///
+  /// Call this at the end of your build method to render dialogs on top:
+  /// ```dart
+  /// void build(TuiContext context) {
+  ///   // Render your UI...
+  ///
+  ///   // Render dialog overlay last
+  ///   context.renderDialogOverlay();
+  /// }
+  /// ```
+  void renderDialogOverlay() {
+    if (_activeDialog != null) {
+      _activeDialog!.paintSurface(_surface, rect);
+    }
   }
 }
