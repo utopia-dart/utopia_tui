@@ -523,33 +523,39 @@ class DemoApp extends TuiApp {
             menu.items[menu.selectedIndex] == 'Dialog') {
           final theme = isLightTheme ? TuiTheme.light : TuiTheme.dark;
           if (ch == 'a') {
-            context.showAlert(
-              title: 'Alert Dialog',
-              message:
-                  'This is an example alert dialog.\nPress Enter to dismiss.',
-              theme: theme,
+            context.showDialog(
+              TuiDialog.alert(
+                title: 'Alert Dialog',
+                message:
+                    'This is an example alert dialog.\nPress Enter to dismiss.',
+                theme: theme,
+              ),
             );
             return;
           }
           if (ch == 's') {
-            context.showConfirm(
-              title: 'Confirm Action',
-              message:
-                  'Are you sure you want to proceed?\nThis action cannot be undone.',
-              confirmText: 'Yes',
-              cancelText: 'No',
-              theme: theme,
+            context.showDialog(
+              TuiDialog.confirm(
+                title: 'Confirm Action',
+                message:
+                    'Are you sure you want to proceed?\nThis action cannot be undone.',
+                confirmText: 'Yes',
+                cancelText: 'No',
+                theme: theme,
+              ),
             );
             return;
           }
           if (ch == 'f') {
-            context.showInput(
-              title: 'Enter Your Name',
-              message: 'Please enter your name below:',
-              defaultValue: 'John Doe',
-              confirmText: 'OK',
-              cancelText: 'Cancel',
-              theme: theme,
+            context.showDialog(
+              TuiDialog.input(
+                title: 'Enter Your Name',
+                message: 'Please enter your name below:',
+                defaultValue: 'John Doe',
+                confirmText: 'OK',
+                cancelText: 'Cancel',
+                theme: theme,
+              ),
             );
             return;
           }
@@ -680,12 +686,14 @@ class DemoApp extends TuiApp {
       ],
     );
 
-    context.showCustom(
-      title: 'Keybindings Help',
-      content: keybindingsContent,
-      width: 50,
-      height: 26,
-      theme: isLightTheme ? TuiTheme.light : TuiTheme.dark,
+    context.showDialog(
+      TuiDialog.custom(
+        title: 'Keybindings Help',
+        content: keybindingsContent,
+        width: 50,
+        height: 26,
+        theme: isLightTheme ? TuiTheme.light : TuiTheme.dark,
+      ),
     );
   }
 

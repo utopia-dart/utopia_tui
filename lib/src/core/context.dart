@@ -1,7 +1,6 @@
 import 'terminal.dart';
 import 'canvas.dart';
 import 'rect.dart';
-import 'theme.dart';
 import '../components/dialog.dart';
 import '../components/interactive_dialog.dart';
 
@@ -95,117 +94,44 @@ class TuiContext {
   /// Returns the active dialog instance, or null if no dialog is active.
   TuiInteractiveDialog? get activeDialog => _activeDialog;
 
-  /// Shows an alert dialog with the specified title and message.
+  /// Shows a dialog.
   ///
   /// Example:
   /// ```dart
-  /// context.showAlert(
+  /// // Alert dialog
+  /// context.showDialog(TuiDialog.alert(
   ///   title: 'Error',
   ///   message: 'Something went wrong!',
   ///   theme: TuiTheme.dark,
-  /// );
-  /// ```
-  void showAlert({
-    required String title,
-    required String message,
-    TuiTheme? theme,
-  }) {
-    final dialog = TuiDialog.alert(
-      title: title,
-      message: message,
-      theme: theme ?? TuiTheme.dark,
-    );
-    _activeDialog = TuiInteractiveDialog(dialog);
-    _activeDialog!.focused = true;
-  }
-
-  /// Shows a confirm dialog with Yes/No options.
+  /// ));
   ///
-  /// Example:
-  /// ```dart
-  /// context.showConfirm(
+  /// // Confirm dialog
+  /// context.showDialog(TuiDialog.confirm(
   ///   title: 'Confirm Action',
   ///   message: 'Are you sure?',
   ///   confirmText: 'Yes',
   ///   cancelText: 'No',
   ///   theme: TuiTheme.dark,
-  /// );
-  /// ```
-  void showConfirm({
-    required String title,
-    required String message,
-    String confirmText = 'OK',
-    String cancelText = 'Cancel',
-    TuiTheme? theme,
-  }) {
-    final dialog = TuiDialog.confirm(
-      title: title,
-      message: message,
-      confirmText: confirmText,
-      cancelText: cancelText,
-      theme: theme ?? TuiTheme.dark,
-    );
-    _activeDialog = TuiInteractiveDialog(dialog);
-    _activeDialog!.focused = true;
-  }
-
-  /// Shows an input dialog for text entry.
+  /// ));
   ///
-  /// Example:
-  /// ```dart
-  /// context.showInput(
+  /// // Input dialog
+  /// context.showDialog(TuiDialog.input(
   ///   title: 'Enter Name',
   ///   message: 'Please enter your name:',
   ///   defaultValue: 'John Doe',
   ///   theme: TuiTheme.dark,
-  /// );
-  /// ```
-  void showInput({
-    required String title,
-    required String message,
-    String defaultValue = '',
-    String confirmText = 'OK',
-    String cancelText = 'Cancel',
-    TuiTheme? theme,
-  }) {
-    final dialog = TuiDialog.input(
-      title: title,
-      message: message,
-      defaultValue: defaultValue,
-      confirmText: confirmText,
-      cancelText: cancelText,
-      theme: theme ?? TuiTheme.dark,
-    );
-    _activeDialog = TuiInteractiveDialog(dialog);
-    _activeDialog!.focused = true;
-  }
-
-  /// Shows a custom dialog with arbitrary content.
+  /// ));
   ///
-  /// Example:
-  /// ```dart
-  /// context.showCustom(
+  /// // Custom dialog
+  /// context.showDialog(TuiDialog.custom(
   ///   title: 'Custom Dialog',
   ///   content: TuiText('Custom content here'),
   ///   width: 50,
   ///   height: 20,
   ///   theme: TuiTheme.dark,
-  /// );
+  /// ));
   /// ```
-  void showCustom({
-    required String title,
-    required dynamic content,
-    int width = 0,
-    int height = 0,
-    TuiTheme? theme,
-  }) {
-    final dialog = TuiDialog.custom(
-      title: title,
-      content: content,
-      width: width,
-      height: height,
-      theme: theme ?? TuiTheme.dark,
-    );
+  void showDialog(TuiDialog dialog) {
     _activeDialog = TuiInteractiveDialog(dialog);
     _activeDialog!.focused = true;
   }

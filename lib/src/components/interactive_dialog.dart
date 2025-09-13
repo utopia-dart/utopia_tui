@@ -31,7 +31,6 @@ import '../core/canvas.dart';
 import '../core/rect.dart';
 import '../core/events.dart';
 import '../core/bindings.dart';
-import '../core/style.dart';
 import 'dialog.dart';
 
 /// Interactive dialog component that handles input and focus management.
