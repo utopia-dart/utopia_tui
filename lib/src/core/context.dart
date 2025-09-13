@@ -171,15 +171,11 @@ class TuiContext {
 
   /// Renders the active dialog overlay if one exists.
   ///
-  /// Call this at the end of your build method to render dialogs on top:
-  /// ```dart
-  /// void build(TuiContext context) {
-  ///   // Render your UI...
+  /// This method is called automatically by the framework after your build()
+  /// method completes, so you don't need to call it manually.
   ///
-  ///   // Render dialog overlay last
-  ///   context.renderDialogOverlay();
-  /// }
-  /// ```
+  /// **Internal API**: This method is intended for internal framework use only.
+  /// Do not call this method directly in your application code.
   void renderDialogOverlay() {
     if (_activeDialog != null) {
       _activeDialog!.paintSurface(_surface, rect);

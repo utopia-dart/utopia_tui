@@ -859,10 +859,7 @@ class DemoApp extends TuiApp {
       );
     }
 
-    // 4. Dialog overlay (render on top of everything)
-    context.renderDialogOverlay();
-
-    // 5. Status bar
+    // 4. Status bar
     StatusBar(width: w, height: h).paintSurface(
       context.surface,
       TuiRect(x: 0, y: h - 1, width: w, height: 1),
