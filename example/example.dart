@@ -1,15 +1,266 @@
 import 'dart:io';
 import 'package:utopia_tui/utopia_tui.dart';
 
-// Styled demo using the Tui API, buffered rendering, and components
+// =============================================================================
+// APPLICATION-SPECIFIC COMPONENTS - Built using library components
+// =============================================================================
+
+/// Simple header component with title and focus hint
+class HeaderComponent extends TuiComponent {
+  final String title;
+  final String hint;
+  final TuiTheme theme;
+
+  HeaderComponent({
+    required this.title,
+    required this.hint,
+    required this.theme,
+  });
+
+  @override
+  void paintSurface(TuiSurface surface, TuiRect rect) {
+    TuiRow(
+      children: [
+        TuiText(title, style: theme.titleStyle ?? const TuiStyle(bold: true)),
+        TuiText(hint, style: theme.dim ?? const TuiStyle(fg: 245)),
+      ],
+      widths: [title.length, -1],
+    ).paintSurface(surface, rect);
+  }
+}
+
+/// Navigation tabs component with focus state
+class NavigationTabs extends TuiComponent {
+  final TuiTabs tabs;
+  final bool focused;
+
+  NavigationTabs({required this.tabs, required this.focused});
+
+  @override
+  void paintSurface(TuiSurface surface, TuiRect rect) {
+    TuiTabsView(tabs, focused: focused).paintSurface(surface, rect);
+  }
+}
+
+/// Menu sidebar component with interactive menu
+class MenuSidebar extends TuiComponent {
+  final TuiInteractiveMenu interactiveMenu;
+  final String title;
+  final TuiTheme theme;
+
+  MenuSidebar({
+    required this.interactiveMenu,
+    required this.title,
+    required this.theme,
+  });
+
+  @override
+  void paintSurface(TuiSurface surface, TuiRect rect) {
+    final borderStyle =
+        interactiveMenu.focused && theme.focusBorderStyle != null
+        ? theme.focusBorderStyle
+        : theme.borderStyle;
+
+    TuiPanelBox(
+      title: title,
+      titleStyle: theme.titleStyle,
+      borderStyle: borderStyle,
+      child: interactiveMenu,
+    ).paintSurface(surface, rect);
+  }
+}
+
+/// Dynamic content area that shows different components based on selection
+class ContentArea extends TuiComponent {
+  final String selectedComponent;
+  final TuiTheme theme;
+  final TuiInteractiveComponent? activeInteractiveComponent;
+  final Map<String, dynamic> componentData;
+
+  ContentArea({
+    required this.selectedComponent,
+    required this.theme,
+    required this.activeInteractiveComponent,
+    required this.componentData,
+  });
+
+  @override
+  void paintSurface(TuiSurface surface, TuiRect rect) {
+    final borderStyle =
+        (activeInteractiveComponent?.focused ?? false) &&
+            theme.focusBorderStyle != null
+        ? theme.focusBorderStyle
+        : theme.borderStyle;
+
+    TuiComponent contentChild = _buildContent();
+
+    TuiPanelBox(
+      title: ' $selectedComponent Demo ',
+      titleStyle: theme.titleStyle,
+      borderStyle: borderStyle,
+      child: contentChild,
+    ).paintSurface(surface, rect);
+  }
+
+  TuiComponent _buildContent() {
+    switch (selectedComponent) {
+      case 'List':
+        return TuiListView(
+          TuiList(
+            const ['Alpha', 'Beta', 'Gamma'],
+            selectedStyle: theme.accent,
+            unselectedStyle: theme.dim,
+          ),
+        );
+      case 'Panel':
+        return TuiText(
+          'Panel demo inside a panel.\nBorders adapt to theme/style.',
+        );
+      case 'TextInput':
+        final interactiveInput =
+            componentData['interactiveInput'] as TuiInteractiveTextInput?;
+        return TuiColumn(
+          children: [
+            TuiText('Input:'),
+            interactiveInput ?? TuiText('Input component not available'),
+          ],
+          heights: const [1, -1],
+        );
+      case 'ProgressBar':
+        final progress = componentData['progress'] as double;
+        return TuiColumn(
+          children: [
+            TuiText('Progress: ${(progress * 100).round()}%'),
+            TuiProgressBarView(componentData['progressBar']),
+          ],
+          heights: const [1, 1],
+        );
+      case 'Spinner':
+        return TuiSpinnerView(componentData['spinner']);
+      case 'Checkbox':
+        return TuiCheckboxView(componentData['checkbox']);
+      case 'Button':
+        return TuiButtonView(componentData['button']);
+      case 'Table':
+        final table = TuiTable(
+          headers: const ['Col A', 'Col B', 'Col C'],
+          rows: const [
+            ['A1', 'B1', 'C1'],
+            ['A2', 'B2', 'C2'],
+            ['A3', 'B3', 'C3'],
+          ],
+          columnWidths: const [10, 10, 10],
+        );
+        return TuiTableView(table);
+      case 'ScrollView':
+        final interactiveScroll =
+            componentData['interactiveScroll'] as TuiInteractiveScrollView?;
+        return interactiveScroll ??
+            TuiText('ScrollView component not available');
+      default:
+        return TuiText('Select a component from the menu');
+    }
+  }
+}
+
+/// Full-screen content for non-example tabs
+class FullScreenContent extends TuiComponent {
+  final String title;
+  final TuiComponent content;
+  final TuiTheme theme;
+  final bool focused;
+
+  FullScreenContent({
+    required this.title,
+    required this.content,
+    required this.theme,
+    required this.focused,
+  });
+
+  @override
+  void paintSurface(TuiSurface surface, TuiRect rect) {
+    final borderStyle = focused && theme.focusBorderStyle != null
+        ? theme.focusBorderStyle
+        : theme.borderStyle;
+
+    TuiPanelBox(
+      title: title,
+      titleStyle: theme.titleStyle,
+      borderStyle: borderStyle,
+      child: content,
+    ).paintSurface(surface, rect);
+  }
+}
+
+/// Status bar component
+class StatusBar extends TuiComponent {
+  final int width;
+  final int height;
+
+  StatusBar({required this.width, required this.height});
+
+  @override
+  void paintSurface(TuiSurface surface, TuiRect rect) {
+    final left = 'Size: ${width}x$height';
+    final center = 'Arrows move | Enter toggles help | Ctrl+C quits';
+    final right =
+        'Tui ${DateTime.now().toLocal().toIso8601String().substring(11, 19)}';
+
+    TuiStatusBarView(
+      style: const TuiStyle(bg: 240, fg: 16),
+      left: left,
+      center: center,
+      right: right,
+    ).paintSurface(surface, rect);
+  }
+}
+
+/// Two-panel layout component for side-by-side display
+class TwoPanelLayout extends TuiComponent {
+  final TuiComponent leftPanel;
+  final TuiComponent rightPanel;
+  final int leftWidth;
+
+  TwoPanelLayout({
+    required this.leftPanel,
+    required this.rightPanel,
+    required this.leftWidth,
+  });
+
+  @override
+  void paintSurface(TuiSurface surface, TuiRect rect) {
+    if (rect.isEmpty) return;
+
+    // Left panel
+    leftPanel.paintSurface(
+      surface,
+      TuiRect(x: rect.x, y: rect.y, width: leftWidth, height: rect.height),
+    );
+
+    // Right panel
+    final rightX = rect.x + leftWidth;
+    final rightWidth = rect.width - leftWidth;
+    if (rightWidth > 0) {
+      rightPanel.paintSurface(
+        surface,
+        TuiRect(x: rightX, y: rect.y, width: rightWidth, height: rect.height),
+      );
+    }
+  }
+}
+
+// =============================================================================
+// MAIN APPLICATION - Composed of reusable components
+// =============================================================================
 
 class DemoApp extends TuiApp {
-  // Components and state
+  // Core components
   var tabs = TuiTabs(
     const ['Example', 'README', 'Keys'],
     activeStyle: const TuiStyle(bold: true, fg: 39),
     inactiveStyle: const TuiStyle(fg: 250),
   );
+
   var menu = TuiList(
     const [
       'List',
@@ -17,8 +268,6 @@ class DemoApp extends TuiApp {
       'TextInput',
       'ProgressBar',
       'Spinner',
-      'Tabs',
-      'StatusBar',
       'Checkbox',
       'Button',
       'Table',
@@ -27,6 +276,13 @@ class DemoApp extends TuiApp {
     selectedStyle: const TuiStyle(bold: true, fg: 39),
     unselectedStyle: const TuiStyle(fg: 250),
   );
+
+  // Interactive components
+  late final TuiInteractiveMenu interactiveMenu;
+  late final TuiInteractiveTextInput interactiveTextInput;
+  late final TuiInteractiveScrollView interactiveScrollView;
+
+  // Regular components
   final input = TuiTextInput(cursorStyle: const TuiStyle(bold: true, fg: 39));
   final spinner = TuiSpinner(style: const TuiStyle(fg: 39));
   final progress = TuiProgressBar(
@@ -34,7 +290,6 @@ class DemoApp extends TuiApp {
     barStyle: const TuiStyle(fg: 250),
     fillStyle: const TuiStyle(fg: 39),
   );
-  final statusBar = TuiStatusBar(style: const TuiStyle(bg: 240, fg: 16));
   final checkbox = TuiCheckbox(
     label: 'Enable feature',
     labelStyle: const TuiStyle(fg: 252),
@@ -48,16 +303,42 @@ class DemoApp extends TuiApp {
   );
   final scroll = TuiScrollView();
 
+  // State
   double progressValue = 0;
-  bool showHelp = true;
   bool isLightTheme = false;
-  bool contentBg = false;
-  // Focus model: 0 = Tabs (top), 1 = Bottom area (panels)
-  int focusLevel = 0;
-  // When on Example tab, which bottom pane is active: 0=left (menu), 1=right (content)
-  int bottomPane = 0;
-  String? _lastChar; // for vim 'gg'
-  int contentHCache = 0;
+  int focusLevel = 0; // 0 = Tabs, 1 = Content
+  int bottomPane = 0; // 0 = left (menu), 1 = right (content)
+
+  // Focus management
+  List<TuiInteractiveComponent> get currentFocusableComponents {
+    if (tabs.index == 0) {
+      // Example tab
+      if (bottomPane == 0) {
+        return [interactiveMenu];
+      } else {
+        final selectedComp = menu.items[menu.selectedIndex];
+        switch (selectedComp) {
+          case 'TextInput':
+            return [interactiveTextInput];
+          case 'ScrollView':
+            return [interactiveScrollView];
+          default:
+            return [];
+        }
+      }
+    } else if (tabs.index == 1) {
+      // README tab
+      return [interactiveScrollView];
+    }
+    return [];
+  }
+
+  DemoApp() {
+    // Initialize interactive components
+    interactiveMenu = TuiInteractiveMenu(menu);
+    interactiveTextInput = TuiInteractiveTextInput(input);
+    interactiveScrollView = TuiInteractiveScrollView(scroll);
+  }
 
   @override
   void init(TuiContext context) {
@@ -80,380 +361,258 @@ class DemoApp extends TuiApp {
   void onEvent(TuiEvent event, TuiContext context) {
     if (event is TuiTickEvent) {
       spinner.tick();
+
+      // Update interactive component focus and tick
+      final focusableComponents = currentFocusableComponents;
+      for (var comp in focusableComponents) {
+        comp.focused = focusLevel == 1;
+      }
+
       final isInputFocused =
           (tabs.index == 0 &&
           focusLevel == 1 &&
           bottomPane == 1 &&
           menu.items[menu.selectedIndex] == 'TextInput');
       input.tick(focused: isInputFocused);
+
       progressValue += 0.01;
       if (progressValue > 1) progressValue = 0;
       progress.value = progressValue;
       return;
     }
-    if (event is TuiKeyEvent) {
-      // Printable keys
-      if (event.isPrintable) {
-        final ch = event.char!.toLowerCase();
-        if (ch == '1') tabs.index = 0;
-        if (ch == '2') tabs.index = 1;
-        if (ch == '3') tabs.index = 2;
-        if (ch == 't' || ch == 'd') {
-          isLightTheme = !isLightTheme;
-          final theme = isLightTheme ? TuiTheme.light : TuiTheme.dark;
-          tabs = TuiTabs(
-            tabs.tabs,
-            index: tabs.index,
-            activeStyle: theme.accent,
-            inactiveStyle: theme.dim,
-          );
-          menu = TuiList(
-            menu.items,
-            selectedIndex: menu.selectedIndex,
-            selectedStyle: theme.accent,
-            unselectedStyle: theme.dim,
-          );
-          return;
+
+    // First try to delegate input to focused interactive components
+    if (focusLevel == 1) {
+      final focusableComponents = currentFocusableComponents;
+      for (var comp in focusableComponents) {
+        if (comp.focused && comp.handleInput(event)) {
+          return; // Event was consumed
         }
-        if (ch == 'g' &&
-            !(focusLevel == 1 && (tabs.index != 0 || bottomPane == 1))) {
-          contentBg = !contentBg;
-          return;
-        }
-        // When Example/left (menu) is focused, j/k navigate the menu
-        if (tabs.index == 0 && focusLevel == 1 && bottomPane == 0) {
-          if (ch == 'j') {
-            menu.moveDown();
-            return;
-          }
-          if (ch == 'k') {
-            menu.moveUp();
-            return;
-          }
-        }
-        // Otherwise, j/k switch focus top/bottom
-        if (ch == 'j') {
-          focusLevel = 1;
-          return;
-        }
-        if (ch == 'k') {
-          focusLevel = 0;
-          return;
-        }
-        // Horizontal navigation
-        if (focusLevel == 0 && ch == 'h') {
-          if (tabs.index > 0) tabs.index--;
-          return;
-        }
-        if (focusLevel == 0 && ch == 'l') {
-          if (tabs.index < tabs.tabs.length - 1) tabs.index++;
-          return;
-        }
-        if (focusLevel == 1) {
-          if (tabs.index == 0) {
-            if (ch == 'h') {
-              bottomPane = 0;
-              return;
-            }
-            if (ch == 'l') {
-              bottomPane = 1;
-              return;
-            }
-          }
-          // Scroll view in README or ScrollView demo
-          final inScroll =
-              tabs.index == 1 ||
-              (tabs.index == 0 &&
-                  bottomPane == 1 &&
-                  menu.items[menu.selectedIndex] == 'ScrollView');
-          if (inScroll) {
-            if (_lastChar == 'g' && ch == 'g') {
-              scroll.scrollTop();
-              _lastChar = null;
-              return;
-            }
-            if (ch == 'g') {
-              _lastChar = 'g';
-              return;
-            }
-            if (ch == 'G') {
-              scroll.scrollBottom(contentHCache);
-              return;
-            }
-          }
-          // Text input typing
-          if (tabs.index == 0 &&
-              bottomPane == 1 &&
-              menu.items[menu.selectedIndex] == 'TextInput') {
-            TuiBindings.textEdit(event, input);
-            return;
-          }
-        }
-        return;
-      }
-      // Non-printable
-      switch (event.code) {
-        case TuiKeyCode.arrowUp:
-          if (focusLevel == 1 && tabs.index == 0 && bottomPane == 0) {
-            menu.moveUp();
-          } else if (focusLevel == 1) {
-            scroll.scrollBy(-1, contentHCache);
-          }
-          break;
-        case TuiKeyCode.arrowDown:
-          if (focusLevel == 1 && tabs.index == 0 && bottomPane == 0) {
-            menu.moveDown();
-          } else if (focusLevel == 1) {
-            scroll.scrollBy(1, contentHCache);
-          }
-          break;
-        case TuiKeyCode.arrowLeft:
-          if (focusLevel == 0) {
-            if (tabs.index > 0) tabs.index--;
-          }
-          break;
-        case TuiKeyCode.arrowRight:
-          if (focusLevel == 0) {
-            if (tabs.index < tabs.tabs.length - 1) tabs.index++;
-          }
-          break;
-        case TuiKeyCode.backspace:
-          if (focusLevel == 1 &&
-              tabs.index == 0 &&
-              bottomPane == 1 &&
-              menu.items[menu.selectedIndex] == 'TextInput') {
-            input.backspace();
-          }
-          break;
-        case TuiKeyCode.delete:
-          if (focusLevel == 1 &&
-              tabs.index == 0 &&
-              bottomPane == 1 &&
-              menu.items[menu.selectedIndex] == 'TextInput') {
-            input.del();
-          }
-          break;
-        case TuiKeyCode.enter:
-          showHelp = !showHelp;
-          break;
-        case TuiKeyCode.escape:
-          focusLevel = 0; // ESC to top (Tabs)
-          break;
-        case TuiKeyCode.tab:
-          // Disabled: use j/k to switch top/bottom
-          break;
-        default:
-          break;
       }
     }
+
+    // Handle global navigation if no component consumed the event
+    if (event is TuiKeyEvent && event.isPrintable) {
+      final ch = event.char!.toLowerCase();
+
+      // Quick tab switching
+      if (ch == '1') {
+        tabs.index = 0;
+        _updateFocus();
+        return;
+      }
+      if (ch == '2') {
+        tabs.index = 1;
+        _updateFocus();
+        return;
+      }
+      if (ch == '3') {
+        tabs.index = 2;
+        _updateFocus();
+        return;
+      }
+
+      // Theme toggle
+      if (ch == 't' || ch == 'd') {
+        isLightTheme = !isLightTheme;
+        _updateTheme();
+        return;
+      }
+
+      // Focus navigation
+      if (ch == 'j') {
+        focusLevel = 1;
+        _updateFocus();
+        return;
+      }
+      if (ch == 'k') {
+        focusLevel = 0;
+        _updateFocus();
+        return;
+      }
+
+      // Horizontal navigation
+      if (focusLevel == 0) {
+        if (ch == 'h' && tabs.index > 0) {
+          tabs.index--;
+          _updateFocus();
+        }
+        if (ch == 'l' && tabs.index < tabs.tabs.length - 1) {
+          tabs.index++;
+          _updateFocus();
+        }
+      }
+
+      if (focusLevel == 1 && tabs.index == 0) {
+        if (ch == 'h') {
+          bottomPane = 0;
+          _updateFocus();
+        }
+        if (ch == 'l') {
+          bottomPane = 1;
+          _updateFocus();
+        }
+      }
+    }
+  }
+
+  void _updateFocus() {
+    // Clear all component focus
+    interactiveMenu.focused = false;
+    interactiveTextInput.focused = false;
+    interactiveScrollView.focused = false;
+
+    // Set focus for current components
+    if (focusLevel == 1) {
+      final focusableComponents = currentFocusableComponents;
+      for (var comp in focusableComponents) {
+        comp.focused = true;
+      }
+    }
+  }
+
+  void _updateTheme() {
+    final theme = isLightTheme ? TuiTheme.light : TuiTheme.dark;
+    tabs = TuiTabs(
+      tabs.tabs,
+      index: tabs.index,
+      activeStyle: theme.accent,
+      inactiveStyle: theme.dim,
+    );
+    menu = TuiList(
+      menu.items,
+      selectedIndex: menu.selectedIndex,
+      selectedStyle: theme.accent,
+      unselectedStyle: theme.dim,
+    );
   }
 
   @override
   void build(TuiContext context) {
     final w = context.width;
     final h = context.height;
+    final theme = isLightTheme ? TuiTheme.light : TuiTheme.dark;
 
-    // Layout
+    // Layout dimensions
     final headerH = 2; // title + tabs
     final footerH = 1; // status bar
     final contentH = h - headerH - footerH;
-    final bool showSidebar = tabs.index == 0; // Only Example tab has sidebar
-    final sideW = showSidebar ? (w * 0.28).round().clamp(16, w - 12) : 0;
+    final bool showSidebar = tabs.index == 0;
+    final sideW = showSidebar ? (w * 0.3).round().clamp(20, w - 20) : 0;
 
-    // Title + focus hint (theme aware)
-    final theme = isLightTheme ? TuiTheme.light : TuiTheme.dark;
-    final focusNames = ['Tabs', 'Bottom'];
-
-    // Create header as two separate styled components in a row
+    // 1. Header component with dynamic focus hints
+    final focusNames = ['Tabs', 'Content'];
     final titleText = ' Tui Demo - Ctrl+C to quit ';
-    final hintText =
+
+    // Get focus hint from active interactive component
+    String hintText =
         ' Focus: ${focusNames[focusLevel]} (j/k to switch, h/l sideways) ';
+    if (focusLevel == 1) {
+      final focusableComponents = currentFocusableComponents;
+      if (focusableComponents.isNotEmpty) {
+        final activeComp = focusableComponents.first;
+        final compHint = activeComp.focusHint;
+        if (compHint.isNotEmpty) {
+          hintText = ' Focus: Content - $compHint ';
+        }
+      }
+    }
 
-    final headerComponent = TuiRow(
-      children: [
-        TuiText(
-          titleText,
-          style: theme.titleStyle ?? const TuiStyle(bold: true),
-        ),
-        TuiText(hintText, style: theme.dim ?? const TuiStyle(fg: 245)),
-      ],
-      widths: [titleText.length, -1],
-    );
+    HeaderComponent(
+      title: titleText,
+      hint: hintText,
+      theme: theme,
+    ).paintSurface(context.surface, TuiRect(x: 0, y: 0, width: w, height: 1));
 
-    final tabsComponent = TuiTabsView(tabs, focused: focusLevel == 0);
+    // 2. Navigation tabs
+    NavigationTabs(
+      tabs: tabs,
+      focused: focusLevel == 0,
+    ).paintSurface(context.surface, TuiRect(x: 0, y: 1, width: w, height: 1));
 
-    // Paint header components to surface
-    headerComponent.paintSurface(
-      context.surface,
-      TuiRect(x: 0, y: 0, width: w, height: 1),
-    );
-
-    tabsComponent.paintSurface(
-      context.surface,
-      TuiRect(x: 0, y: 1, width: w, height: 1),
-    );
-
-    // Clear the entire bottom area before drawing panels (prevents leftovers on tab switch)
+    // Clear content area
     context.surface.clearRect(0, headerH, w, contentH);
 
-    // Cache content height for scroll ops
-    contentHCache = contentH;
-
-    // Border style for focused content
-    final rightBorderStyle =
-        (focusLevel == 1 && (tabs.index != 0 || bottomPane == 1)) &&
-            theme.focusBorderStyle != null
-        ? theme.focusBorderStyle
-        : theme.borderStyle;
-
-    // Build content based on active tab
-    TuiComponent contentChild;
-    String contentTitle = ' Content ';
-
+    // 3. Main content area
     if (tabs.index == 0) {
-      // Example tab - show menu content
-      final comp = menu.items[menu.selectedIndex];
-      switch (comp) {
-        case 'List':
-          contentChild = TuiListView(
-            TuiList(
-              const ['Alpha', 'Beta', 'Gamma'],
-              selectedStyle: theme.accent,
-              unselectedStyle: theme.dim,
-            ),
-          );
-          break;
-        case 'Panel':
-          contentChild = TuiText(
-            'Panel demo inside a panel.\nBorders adapt to theme/style.',
-          );
-          break;
+      // Example tab with sidebar
+      final leftPanel = MenuSidebar(
+        interactiveMenu: interactiveMenu,
+        title: ' Menu ',
+        theme: theme,
+      );
+
+      // Determine active interactive component for right panel
+      TuiInteractiveComponent? activeInteractiveComponent;
+      final selectedComp = menu.items[menu.selectedIndex];
+      switch (selectedComp) {
         case 'TextInput':
-          contentChild = TuiColumn(
-            children: [TuiText('Input:'), TuiTextInputView(input)],
-            heights: const [1, -1],
-          );
-          break;
-        case 'ProgressBar':
-          contentChild = TuiColumn(
-            children: [
-              TuiText('Progress: ${(progressValue * 100).round()}%'),
-              TuiProgressBarView(progress),
-            ],
-            heights: const [1, 1],
-          );
-          break;
-        case 'Spinner':
-          contentChild = TuiSpinnerView(spinner);
-          break;
-        case 'Tabs':
-          contentChild = TuiTabsView(tabs, focused: (focusLevel == 0));
-          break;
-        case 'StatusBar':
-          contentChild = TuiStatusBarView(
-            style: const TuiStyle(bg: 240, fg: 16),
-            left: 'Left',
-            center: 'Center',
-            right: 'Right',
-          );
-          break;
-        case 'Checkbox':
-          contentChild = TuiCheckboxView(checkbox);
-          break;
-        case 'Button':
-          contentChild = TuiButtonView(button);
-          break;
-        case 'Table':
-          final table = TuiTable(
-            headers: const ['Col A', 'Col B', 'Col C'],
-            rows: const [
-              ['A1', 'B1', 'C1'],
-              ['A2', 'B2', 'C2'],
-              ['A3', 'B3', 'C3'],
-            ],
-            columnWidths: const [10, 10, 10],
-          );
-          contentChild = TuiTableView(table);
+          activeInteractiveComponent = interactiveTextInput;
           break;
         case 'ScrollView':
-          contentChild = TuiScrollViewView(scroll);
+          activeInteractiveComponent = interactiveScrollView;
           break;
-        default:
-          contentChild = TuiText('');
       }
-    } else if (tabs.index == 1) {
-      // README tab
-      contentChild = TuiScrollViewView(scroll);
-      contentTitle = ' README ';
-    } else {
-      // Keys tab
-      contentChild = TuiText(
-        'Key bindings (Vim style):\n'
-        ' h/l: tabs left/right when tabs focused\n'
-        ' j/k: focus Tabs ↔ Panels (Example) or Tabs ↔ Content (others)\n'
-        ' j/k: scroll down/up in README/ScrollView when content focused\n'
-        ' gg / G: top / bottom\n'
-        ' t or d: toggle theme (dark/light); g: toggle content background\n'
-        ' w: toggle wrap in README/ScrollView\n'
-        ' Ctrl+C: quit',
-      );
-      contentTitle = ' Key Bindings ';
-    }
 
-    // Apply optional content background
-    if (contentBg) {
-      final bg = TuiStyle(bg: isLightTheme ? 254 : 236);
-      contentChild = TuiBackground(style: bg, child: contentChild);
-    }
-
-    // Render panels - use side-by-side component if sidebar is shown, otherwise single panel
-    if (showSidebar) {
-      final leftBorderStyle =
-          (focusLevel == 1 && tabs.index == 0 && bottomPane == 0) &&
-              theme.focusBorderStyle != null
-          ? theme.focusBorderStyle
-          : theme.borderStyle;
-
-      TuiSideBySidePanels(
-        leftTitle: ' Menu ',
-        rightTitle: contentTitle,
-        leftChild: TuiListView(menu),
-        rightChild: contentChild,
-        leftWidth: sideW,
+      final rightPanel = ContentArea(
+        selectedComponent: selectedComp,
         theme: theme,
-        titleStyle: theme.titleStyle,
-        leftBorderStyle: leftBorderStyle,
-        rightBorderStyle: rightBorderStyle,
+        activeInteractiveComponent: activeInteractiveComponent,
+        componentData: {
+          'input': input,
+          'interactiveInput': interactiveTextInput,
+          'progress': progressValue,
+          'progressBar': progress,
+          'spinner': spinner,
+          'checkbox': checkbox,
+          'button': button,
+          'scroll': scroll,
+          'interactiveScroll': interactiveScrollView,
+        },
+      );
+
+      TwoPanelLayout(
+        leftPanel: leftPanel,
+        rightPanel: rightPanel,
+        leftWidth: sideW,
       ).paintSurface(
         context.surface,
         TuiRect(x: 0, y: headerH, width: w, height: contentH),
       );
     } else {
-      TuiPanelBox(
-        title: contentTitle,
-        titleStyle: theme.titleStyle,
-        borderStyle: rightBorderStyle,
-        child: contentChild,
+      // Full-screen content for README and Keys tabs
+      TuiComponent content;
+      String title;
+
+      if (tabs.index == 1) {
+        content = interactiveScrollView;
+        title = ' README ';
+      } else {
+        content = TuiText(
+          'Key bindings:\n'
+          ' h/l: tabs left/right when tabs focused\n'
+          ' j/k: focus Tabs ↔ Content\n'
+          ' 1/2/3: quick tab switching\n'
+          ' t or d: toggle theme (dark/light)\n'
+          ' e: enter component mode (scroll/edit)\n'
+          ' Ctrl+C: quit',
+        );
+        title = ' Key Bindings ';
+      }
+
+      FullScreenContent(
+        title: title,
+        content: content,
+        theme: theme,
+        focused: focusLevel == 1,
       ).paintSurface(
         context.surface,
         TuiRect(x: 0, y: headerH, width: w, height: contentH),
       );
     }
 
-    // Status bar
-    final left = 'Size: ${w}x$h';
-    final center = 'Arrows move | Enter toggles help | Ctrl+C quits';
-    final right =
-        'Tui ${DateTime.now().toLocal().toIso8601String().substring(11, 19)}';
-
-    final statusBarComponent = TuiStatusBarView(
-      style: const TuiStyle(bg: 240, fg: 16),
-      left: left,
-      center: center,
-      right: right,
-    );
-
-    statusBarComponent.paintSurface(
+    // 4. Status bar
+    StatusBar(width: w, height: h).paintSurface(
       context.surface,
       TuiRect(x: 0, y: h - 1, width: w, height: 1),
     );
@@ -461,8 +620,5 @@ class DemoApp extends TuiApp {
 }
 
 void main() async {
-  final runner = TuiRunner(DemoApp());
-  try {
-    await runner.run();
-  } catch (_) {}
+  await TuiRunner(DemoApp()).run();
 }

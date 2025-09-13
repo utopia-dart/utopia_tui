@@ -9,6 +9,7 @@ export 'src/core/runner.dart';
 export 'src/core/context.dart';
 export 'src/core/terminal.dart';
 export 'src/core/component.dart';
+export 'src/core/interactive.dart';
 export 'src/core/theme.dart';
 export 'src/core/style.dart';
 export 'src/core/layout.dart';
