@@ -58,3 +58,5 @@ export 'src/components/interactive_scroll_view.dart';
 export 'src/components/interactive_text_input.dart';
 export 'src/components/interactive_menu.dart';
 export 'src/components/composition.dart';
+export 'src/components/dialog.dart';
+export 'src/components/interactive_dialog.dart';

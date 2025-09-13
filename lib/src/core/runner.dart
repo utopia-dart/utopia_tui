@@ -220,6 +220,9 @@ class TuiRunner {
     ctx.clear();
     try {
       app.build(ctx);
+
+      // Automatically render dialog overlay after user build
+      ctx.renderDialogOverlay();
     } catch (e) {
       // If build fails, show error message
       ctx.surface.putText(
