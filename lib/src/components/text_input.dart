@@ -62,36 +62,48 @@ class TuiTextInput extends TuiInteractiveComponent {
   bool handleInput(TuiEvent event) {
     if (!focused) return false;
 
-    if (event is TuiKeyEvent && event.isPrintable) {
+    if (event is TuiKeyEvent) {
       if (editMode) {
-        TuiBindings.textEdit(event, this);
-        markNeedsRebuild();
-        return true;
+        if (event.isPrintable) {
+          TuiBindings.textEdit(event, this);
+          markNeedsRebuild();
+          return true;
+        }
+        switch (event.code) {
+          case TuiKeyCode.backspace:
+            backspace();
+            markNeedsRebuild();
+            return true;
+          case TuiKeyCode.delete:
+            del();
+            markNeedsRebuild();
+            return true;
+          case TuiKeyCode.arrowLeft:
+            left();
+            markNeedsRebuild();
+            return true;
+          case TuiKeyCode.arrowRight:
+            right();
+            markNeedsRebuild();
+            return true;
+          case TuiKeyCode.ctrlE:
+            editMode = false;
+            markNeedsRebuild();
+            return true;
+          default:
+            return true;
+        }
       }
 
-      if (event.char!.toLowerCase() == 'e') {
+      if (event.isPrintable && event.char!.toLowerCase() == 'e') {
         editMode = true;
         markNeedsRebuild();
         return true;
       }
-    }
-
-    if (event is TuiKeyEvent && editMode) {
-      switch (event.code) {
-        case TuiKeyCode.backspace:
-          backspace();
-          markNeedsRebuild();
-          return true;
-        case TuiKeyCode.delete:
-          del();
-          markNeedsRebuild();
-          return true;
-        case TuiKeyCode.escape:
-          editMode = false;
-          markNeedsRebuild();
-          return true;
-        default:
-          break;
+      if (event.code == TuiKeyCode.ctrlE) {
+        editMode = true;
+        markNeedsRebuild();
+        return true;
       }
     }
 
@@ -100,7 +112,7 @@ class TuiTextInput extends TuiInteractiveComponent {
 
   @override
   String get focusHint =>
-      editMode ? 'EDIT MODE: type text, ESC=exit' : 'e=edit mode';
+      editMode ? 'EDIT MODE: type text, Ctrl+E=exit' : 'e or Ctrl+E=edit';
 
   String render(int width) {
     // Render whole text inside [ ... ] and show a blinking underscore cursor.

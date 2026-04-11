@@ -47,49 +47,53 @@ class TuiScrollView extends TuiInteractiveComponent {
   bool handleInput(TuiEvent event) {
     if (!focused) return false;
 
-    if (event is TuiKeyEvent && event.isPrintable) {
-      final ch = event.char!.toLowerCase();
-
-      if (ch == 'e') {
+    if (event is TuiKeyEvent) {
+      if (event.code == TuiKeyCode.ctrlE) {
         scrollMode = !scrollMode;
         markNeedsRebuild();
         return true;
       }
 
+      if (event.isPrintable) {
+        final ch = event.char!.toLowerCase();
+
+        if (ch == 'e') {
+          scrollMode = !scrollMode;
+          markNeedsRebuild();
+          return true;
+        }
+
+        if (scrollMode) {
+          switch (ch) {
+            case 'j':
+              scrollBy(1, _lastViewHeight, _lastViewWidth);
+              markNeedsRebuild();
+              return true;
+            case 'k':
+              scrollBy(-1, _lastViewHeight, _lastViewWidth);
+              markNeedsRebuild();
+              return true;
+            case 'g':
+              scrollTop();
+              markNeedsRebuild();
+              return true;
+          }
+        }
+      }
+
       if (scrollMode) {
-        switch (ch) {
-          case 'j':
-            scrollBy(1, _lastViewHeight, _lastViewWidth);
-            markNeedsRebuild();
-            return true;
-          case 'k':
+        switch (event.code) {
+          case TuiKeyCode.arrowUp:
             scrollBy(-1, _lastViewHeight, _lastViewWidth);
             markNeedsRebuild();
             return true;
-          case 'g':
-            scrollTop();
+          case TuiKeyCode.arrowDown:
+            scrollBy(1, _lastViewHeight, _lastViewWidth);
             markNeedsRebuild();
             return true;
+          default:
+            break;
         }
-      }
-    }
-
-    if (event is TuiKeyEvent && scrollMode) {
-      switch (event.code) {
-        case TuiKeyCode.arrowUp:
-          scrollBy(-1, _lastViewHeight, _lastViewWidth);
-          markNeedsRebuild();
-          return true;
-        case TuiKeyCode.arrowDown:
-          scrollBy(1, _lastViewHeight, _lastViewWidth);
-          markNeedsRebuild();
-          return true;
-        case TuiKeyCode.escape:
-          scrollMode = false;
-          markNeedsRebuild();
-          return true;
-        default:
-          break;
       }
     }
 
@@ -98,7 +102,7 @@ class TuiScrollView extends TuiInteractiveComponent {
 
   @override
   String get focusHint =>
-      scrollMode ? 'SCROLL MODE: j/k↕ g=top ESC=exit' : 'e=scroll mode';
+      scrollMode ? 'SCROLL MODE: j/k↕ g=top e/Ctrl+E=exit' : 'e=scroll mode';
 
   List<String> render(int width, int height) {
     final src = softWrap ? _wrap(_lines, width) : _lines;

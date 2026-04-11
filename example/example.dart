@@ -282,8 +282,8 @@ class DemoApp extends TuiApp {
                 TuiText(' 1/2/3 = Switch tabs'),
                 TuiText(''),
                 TuiText('Actions:'),
-                TuiText(' e = Enter edit/scroll mode'),
-                TuiText(' ESC = Exit mode / move focus up'),
+                TuiText(' e = Enter/toggle edit/scroll mode'),
+                TuiText(' Ctrl+E = Toggle edit/scroll mode'),
                 TuiText(' t/d = Toggle theme'),
                 TuiText(' Ctrl+C = Quit'),
               ],
@@ -538,8 +538,8 @@ class DemoApp extends TuiApp {
         ' 1/2/3: quick tab switching\n'
         '\n'
         'Component Interaction:\n'
-        ' e: enter edit/scroll mode\n'
-        ' ESC: exit mode / move focus up\n'
+        ' e: enter/toggle edit/scroll mode\n'
+        ' Ctrl+E: toggle edit/scroll mode\n'
         '\n'
         'Dialog System (on Dialog tab):\n'
         ' A/S/F/G: show Alert/Confirm/Input/Help\n'
