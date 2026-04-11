@@ -1,3 +1,34 @@
+## [2.0.0]
+
+### Breaking Changes
+- **Removed `dart_console` dependency** - library now uses `dart:io` directly with zero external dependencies
+- **Removed interactive wrapper classes** - `InteractiveMenu`, `InteractiveTextInput`, `InteractiveScrollView` are removed; interactive behavior is now built into `TuiList`, `TuiTextInput`, and `TuiScrollView` directly
+- **`TuiCell` API changed** - now stores a `String char` (grapheme cluster) instead of `int codePoint`; use `TuiCell(char: 'A')` instead of `TuiCell(codePoint: 65)`
+- **Edit/scroll mode uses Ctrl+E** instead of ESC (ESC is unreliable with `dart_console`-style input)
+
+### Added
+- **`TuiFocusManager`** - declarative tree-based focus navigation with directional movement (up/down/left/right), Tab cycling, and `focusById`
+- **`TuiFocusNode`** - sealed class hierarchy (`.leaf()`, `.row()`, `.column()`) for spatial focus layout
+- **`TuiFocusPlaceholder`** - focusable component for panes without interactive content
+- **Wide character support** - proper handling of emoji, CJK, and fullwidth characters in rendering and word wrapping
+- **Grapheme cluster support** - zero-width characters (variation selectors, combining marks, ZWJ) are grouped with their base character
+- **`TuiSurface.displayWidth()`** - accurate terminal display width calculation
+- **Alternate screen buffer** - clean terminal restore on Ctrl+C exit
+- **RGB color support** - `TuiStyle` now supports `fgRgb` and `bgRgb`
+
+### Fixed
+- Terminal not restoring properly on Ctrl+C exit (stuck in raw mode)
+- Wide characters (emoji) overwriting panel right borders
+- Zero-width characters (❤️ variation selector) causing column misalignment
+- Focus highlighting only working for TextInput/ScrollView, now works for all panes
+- Edit mode in TextInput intercepting 'e' key instead of allowing typing
+
+### Improved
+- Components (`TuiList`, `TuiTextInput`, `TuiScrollView`, `TuiTabs`) now extend `TuiInteractiveComponent` directly
+- Async stdin key reading - no more isolate-based input, fully cancellable
+- Word wrapping accounts for display width of wide characters
+- Vim-style navigation (h/j/k/l) alongside arrow keys in interactive components
+
 ## [1.1.0]
 
 - Dialog support with modal overlays
