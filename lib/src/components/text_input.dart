@@ -1,9 +1,11 @@
-import '../core/component.dart';
+import '../core/interactive.dart';
 import '../core/canvas.dart';
 import '../core/rect.dart';
 import '../core/style.dart';
+import '../core/events.dart';
+import '../core/bindings.dart';
 
-class TuiTextInput extends TuiComponent {
+class TuiTextInput extends TuiInteractiveComponent {
   String text;
   int cursor; // 0..text.length
   final int maxLength;
@@ -53,6 +55,54 @@ class TuiTextInput extends TuiComponent {
   void right() {
     if (cursor < text.length) cursor++;
   }
+
+  bool editMode = false;
+
+  @override
+  bool handleInput(TuiEvent event) {
+    if (!focused) return false;
+
+    if (event is TuiKeyEvent && event.isPrintable) {
+      final ch = event.char!.toLowerCase();
+
+      if (ch == 'e') {
+        editMode = !editMode;
+        markNeedsRebuild();
+        return true;
+      }
+
+      if (editMode) {
+        TuiBindings.textEdit(event, this);
+        markNeedsRebuild();
+        return true;
+      }
+    }
+
+    if (event is TuiKeyEvent && editMode) {
+      switch (event.code) {
+        case TuiKeyCode.backspace:
+          backspace();
+          markNeedsRebuild();
+          return true;
+        case TuiKeyCode.delete:
+          del();
+          markNeedsRebuild();
+          return true;
+        case TuiKeyCode.escape:
+          editMode = false;
+          markNeedsRebuild();
+          return true;
+        default:
+          break;
+      }
+    }
+
+    return false;
+  }
+
+  @override
+  String get focusHint =>
+      editMode ? 'EDIT MODE: type text, ESC=exit' : 'e=edit mode';
 
   String render(int width) {
     // Render whole text inside [ ... ] and show a blinking underscore cursor.

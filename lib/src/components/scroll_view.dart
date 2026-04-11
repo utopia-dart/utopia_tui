@@ -1,8 +1,9 @@
-import '../core/component.dart';
+import '../core/interactive.dart';
 import '../core/canvas.dart';
 import '../core/rect.dart';
+import '../core/events.dart';
 
-class TuiScrollView extends TuiComponent {
+class TuiScrollView extends TuiInteractiveComponent {
   List<String> _lines = const [];
   int offset = 0;
   bool softWrap = true; // Enable soft wrap by default
@@ -37,6 +38,67 @@ class TuiScrollView extends TuiComponent {
     final maxOffset = (src.length - viewHeight).clamp(0, src.length);
     offset = maxOffset;
   }
+
+  bool scrollMode = false;
+  int _lastViewHeight = 20;
+  int _lastViewWidth = 80;
+
+  @override
+  bool handleInput(TuiEvent event) {
+    if (!focused) return false;
+
+    if (event is TuiKeyEvent && event.isPrintable) {
+      final ch = event.char!.toLowerCase();
+
+      if (ch == 'e') {
+        scrollMode = !scrollMode;
+        markNeedsRebuild();
+        return true;
+      }
+
+      if (scrollMode) {
+        switch (ch) {
+          case 'j':
+            scrollBy(1, _lastViewHeight, _lastViewWidth);
+            markNeedsRebuild();
+            return true;
+          case 'k':
+            scrollBy(-1, _lastViewHeight, _lastViewWidth);
+            markNeedsRebuild();
+            return true;
+          case 'g':
+            scrollTop();
+            markNeedsRebuild();
+            return true;
+        }
+      }
+    }
+
+    if (event is TuiKeyEvent && scrollMode) {
+      switch (event.code) {
+        case TuiKeyCode.arrowUp:
+          scrollBy(-1, _lastViewHeight, _lastViewWidth);
+          markNeedsRebuild();
+          return true;
+        case TuiKeyCode.arrowDown:
+          scrollBy(1, _lastViewHeight, _lastViewWidth);
+          markNeedsRebuild();
+          return true;
+        case TuiKeyCode.escape:
+          scrollMode = false;
+          markNeedsRebuild();
+          return true;
+        default:
+          break;
+      }
+    }
+
+    return false;
+  }
+
+  @override
+  String get focusHint =>
+      scrollMode ? 'SCROLL MODE: j/k↕ g=top ESC=exit' : 'e=scroll mode';
 
   List<String> render(int width, int height) {
     final src = softWrap ? _wrap(_lines, width) : _lines;
@@ -108,6 +170,8 @@ class TuiScrollView extends TuiComponent {
   @override
   void paintSurface(TuiSurface surface, TuiRect rect) {
     if (rect.isEmpty) return;
+    _lastViewHeight = rect.height;
+    _lastViewWidth = rect.width;
     surface.clearRect(rect.x, rect.y, rect.width, rect.height);
     final lines = render(rect.width, rect.height);
     for (var i = 0; i < rect.height && i < lines.length; i++) {

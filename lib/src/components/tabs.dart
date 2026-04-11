@@ -1,15 +1,15 @@
 import '../core/style.dart';
-import '../core/component.dart';
+import '../core/interactive.dart';
 import '../core/canvas.dart';
 import '../core/rect.dart';
+import '../core/events.dart';
 
-class TuiTabs extends TuiComponent {
+class TuiTabs extends TuiInteractiveComponent {
   final List<String> tabs;
   int index;
   final TuiStyle? activeStyle;
   final TuiStyle? inactiveStyle;
   final String separator;
-  bool focused;
 
   TuiTabs(
     this.tabs, {
@@ -17,8 +17,39 @@ class TuiTabs extends TuiComponent {
     this.activeStyle,
     this.inactiveStyle,
     this.separator = '  ',
-    this.focused = false,
-  });
+    bool focused = false,
+  }) {
+    this.focused = focused;
+  }
+
+  @override
+  bool handleInput(TuiEvent event) {
+    if (!focused) return false;
+
+    if (event is TuiKeyEvent) {
+      if (event.code == TuiKeyCode.arrowLeft ||
+          (event.isPrintable && event.char == 'h')) {
+        if (index > 0) {
+          index--;
+          markNeedsRebuild();
+          return true;
+        }
+      }
+      if (event.code == TuiKeyCode.arrowRight ||
+          (event.isPrintable && event.char == 'l')) {
+        if (index < tabs.length - 1) {
+          index++;
+          markNeedsRebuild();
+          return true;
+        }
+      }
+    }
+
+    return false;
+  }
+
+  @override
+  String get focusHint => 'h/l or ←→ to switch tabs';
 
   @override
   void paintSurface(TuiSurface surface, TuiRect rect) {

@@ -1,14 +1,15 @@
-import '../core/component.dart';
+import '../core/interactive.dart';
 import '../core/canvas.dart';
 import '../core/rect.dart';
 import '../core/theme.dart';
 import '../core/style.dart';
+import '../core/events.dart';
 
-/// A selectable list component with navigation and styling support.
+/// A selectable list component with built-in keyboard navigation.
 ///
 /// Displays a list of string items with one item selected at a time.
-/// Supports keyboard navigation and customizable styling for selected
-/// and unselected items using theme-based prefixes.
+/// Supports keyboard navigation (j/k and arrow keys) and customizable
+/// styling for selected and unselected items.
 ///
 /// ## Usage
 ///
@@ -22,11 +23,8 @@ import '../core/style.dart';
 /// // Navigate the list
 /// list.moveUp();
 /// list.moveDown();
-///
-/// // Render to strings
-/// final lines = list.render(20, 10);
 /// ```
-class TuiList extends TuiComponent {
+class TuiList extends TuiInteractiveComponent {
   /// The list of items to display.
   final List<String> items;
 
@@ -68,6 +66,49 @@ class TuiList extends TuiComponent {
   void moveDown() {
     if (selectedIndex < items.length - 1) selectedIndex++;
   }
+
+  @override
+  bool handleInput(TuiEvent event) {
+    if (!focused) return false;
+
+    if (event is TuiKeyEvent && event.isPrintable) {
+      final ch = event.char!.toLowerCase();
+      if (ch == 'j') {
+        if (selectedIndex >= items.length - 1) return false;
+        moveDown();
+        markNeedsRebuild();
+        return true;
+      }
+      if (ch == 'k') {
+        if (selectedIndex <= 0) return false;
+        moveUp();
+        markNeedsRebuild();
+        return true;
+      }
+    }
+
+    if (event is TuiKeyEvent) {
+      switch (event.code) {
+        case TuiKeyCode.arrowUp:
+          if (selectedIndex <= 0) return false;
+          moveUp();
+          markNeedsRebuild();
+          return true;
+        case TuiKeyCode.arrowDown:
+          if (selectedIndex >= items.length - 1) return false;
+          moveDown();
+          markNeedsRebuild();
+          return true;
+        default:
+          break;
+      }
+    }
+
+    return false;
+  }
+
+  @override
+  String get focusHint => 'j/k or ↑↓ to navigate';
 
   /// Renders the list as strings for the given dimensions.
   ///
