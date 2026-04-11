@@ -74,7 +74,8 @@ class TuiRunner {
         print('Error during app initialization: $e');
       }
 
-      // Prepare terminal
+      // Prepare terminal: switch to alternate screen buffer
+      terminal.write('\x1b[?1049h');
       terminal.clearScreen();
       terminal.hideCursor();
 
@@ -267,10 +268,8 @@ class TuiRunner {
     _keyIsolate?.kill(priority: Isolate.immediate);
     terminal.resetRawMode();
     terminal.write('\x1b[0m');
-    terminal.clearScreen();
-    terminal.setCursor(0, 0);
     terminal.showCursor();
-    terminal.write('\n');
+    terminal.write('\x1b[?1049l');
   }
 }
 
