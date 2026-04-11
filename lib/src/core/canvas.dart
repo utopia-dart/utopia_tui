@@ -26,18 +26,28 @@ class TuiCell {
   /// The styling applied to this character.
   final TuiStyle style;
 
+  /// Whether this cell is the trailing half of a wide (2-column) character.
+  final bool wideContinuation;
+
   /// Creates a cell with the specified [codePoint] and optional [style].
-  const TuiCell({required this.codePoint, this.style = const TuiStyle()});
+  const TuiCell({
+    required this.codePoint,
+    this.style = const TuiStyle(),
+    this.wideContinuation = false,
+  });
 
   /// Creates a cell from a string [char] with optional [style].
   ///
   /// If [char] is empty, defaults to a space character (code point 32).
   /// If [char] has multiple characters, only the first is used.
   TuiCell.fromChar(String char, {this.style = const TuiStyle()})
-    : codePoint = char.isNotEmpty ? char.codeUnitAt(0) : 32;
+    : codePoint = char.isNotEmpty ? char.codeUnitAt(0) : 32,
+      wideContinuation = false;
 
   /// Creates an empty cell (space character) with optional [style].
-  const TuiCell.empty({this.style = const TuiStyle()}) : codePoint = 32;
+  const TuiCell.empty({this.style = const TuiStyle()})
+    : codePoint = 32,
+      wideContinuation = false;
 
   /// The character as a string.
   String get char => String.fromCharCode(codePoint);
@@ -55,11 +65,13 @@ class TuiCell {
     if (identical(this, other)) return true;
     return other is TuiCell &&
         other.codePoint == codePoint &&
-        other.style == style;
+        other.style == style &&
+        other.wideContinuation == wideContinuation;
   }
 
   @override
-  int get hashCode => codePoint.hashCode ^ style.hashCode;
+  int get hashCode =>
+      codePoint.hashCode ^ style.hashCode ^ wideContinuation.hashCode;
 }
 
 /// A 2D grid of character cells representing the terminal screen buffer.
@@ -152,6 +164,16 @@ class TuiSurface {
       if (col + charWidth > limit) break;
       final ch = String.fromCharCode(rune);
       putChar(col, y, ch, style: style);
+      if (charWidth == 2) {
+        final nextCol = col + 1;
+        if (nextCol < width) {
+          setCell(
+            nextCol,
+            y,
+            const TuiCell(codePoint: 32, wideContinuation: true),
+          );
+        }
+      }
       col += charWidth;
     }
   }
@@ -302,13 +324,15 @@ class TuiSurface {
       for (int col = 0; col < width; col++) {
         final cell = _grid[row][col];
 
+        // Skip continuation cells — the wide character already occupies
+        // this terminal column via the previous cell's output.
+        if (cell.wideContinuation) continue;
+
         // Apply style changes only when needed
         if (currentStyle != cell.style) {
           if (currentStyle != null) {
-            // Reset previous style
             buffer.write('\x1b[0m');
           }
-          // Apply new style
           buffer.write(cell.style.toAnsi());
           currentStyle = cell.style;
         }
@@ -335,7 +359,10 @@ class TuiSurface {
   /// Get a row as a string (for debugging)
   String getRowString(int row) {
     if (row < 0 || row >= height) return '';
-    return _grid[row].map((cell) => cell.char).join();
+    return _grid[row]
+        .where((cell) => !cell.wideContinuation)
+        .map((cell) => cell.char)
+        .join();
   }
 
   /// Estimated display width of a string, accounting for wide characters.
