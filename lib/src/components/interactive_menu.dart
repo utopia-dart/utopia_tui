@@ -18,10 +18,12 @@ class TuiInteractiveMenu extends TuiInteractiveComponent {
       final ch = event.char!.toLowerCase();
       switch (ch) {
         case 'j':
+          if (menu.selectedIndex >= menu.items.length - 1) return false;
           menu.moveDown();
           markNeedsRebuild();
           return true;
         case 'k':
+          if (menu.selectedIndex <= 0) return false;
           menu.moveUp();
           markNeedsRebuild();
           return true;
@@ -31,10 +33,12 @@ class TuiInteractiveMenu extends TuiInteractiveComponent {
     if (event is TuiKeyEvent) {
       switch (event.code) {
         case TuiKeyCode.arrowUp:
+          if (menu.selectedIndex <= 0) return false;
           menu.moveUp();
           markNeedsRebuild();
           return true;
         case TuiKeyCode.arrowDown:
+          if (menu.selectedIndex >= menu.items.length - 1) return false;
           menu.moveDown();
           markNeedsRebuild();
           return true;
