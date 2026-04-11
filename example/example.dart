@@ -216,7 +216,7 @@ class StatusBar extends TuiComponent {
   @override
   void paintSurface(TuiSurface surface, TuiRect rect) {
     final left = 'Size: ${width}x$height';
-    final center = 'Arrows move | Enter toggles help | Ctrl+C quits';
+    final center = '←→↑↓ navigate | Tab switch pane | Ctrl+C quit';
     final right =
         'Tui ${DateTime.now().toLocal().toIso8601String().substring(11, 19)}';
 
@@ -465,13 +465,11 @@ class DemoApp extends TuiApp {
     if (event is TuiKeyEvent) {
       // Handle special keys first
       if (event.code == TuiKeyCode.escape) {
-        // ESC key - dismiss any active dialog or exit component mode
         if (context.hasActiveDialog) {
           context.dismissDialog();
           _updateFocus();
           return;
         }
-        // If not in dialog, exit component focus mode
         if (focusLevel == 1) {
           focusLevel = 0;
           _updateFocus();
@@ -479,11 +477,56 @@ class DemoApp extends TuiApp {
         }
       }
 
+      // Arrow key navigation (works at all focus levels)
+      switch (event.code) {
+        case TuiKeyCode.arrowDown:
+          if (focusLevel == 0) {
+            focusLevel = 1;
+            _updateFocus();
+            return;
+          }
+        case TuiKeyCode.arrowUp:
+          if (focusLevel == 1) {
+            focusLevel = 0;
+            _updateFocus();
+            return;
+          }
+        case TuiKeyCode.arrowLeft:
+          if (focusLevel == 0 && tabs.index > 0) {
+            tabs.index--;
+            _updateFocus();
+            return;
+          }
+          if (focusLevel == 1 && tabs.index == 0 && bottomPane == 1) {
+            bottomPane = 0;
+            _updateFocus();
+            return;
+          }
+        case TuiKeyCode.arrowRight:
+          if (focusLevel == 0 && tabs.index < tabs.tabs.length - 1) {
+            tabs.index++;
+            _updateFocus();
+            return;
+          }
+          if (focusLevel == 1 && tabs.index == 0 && bottomPane == 0) {
+            bottomPane = 1;
+            _updateFocus();
+            return;
+          }
+        case TuiKeyCode.tab:
+          if (focusLevel == 1 && tabs.index == 0) {
+            bottomPane = bottomPane == 0 ? 1 : 0;
+            _updateFocus();
+            return;
+          }
+        default:
+          break;
+      }
+
       // Handle printable characters
       if (event.isPrintable) {
         final ch = event.char!.toLowerCase();
 
-        // Q key - dismiss any active dialog (alternative to ESC)
         if (ch == 'q') {
           if (context.hasActiveDialog) {
             context.dismissDialog();
@@ -561,41 +604,6 @@ class DemoApp extends TuiApp {
           if (ch == 'g') {
             _showKeybindingsDialog(context);
             return;
-          }
-        }
-
-        // Focus navigation
-        if (ch == 'j') {
-          focusLevel = 1;
-          _updateFocus();
-          return;
-        }
-        if (ch == 'k') {
-          focusLevel = 0;
-          _updateFocus();
-          return;
-        }
-
-        // Horizontal navigation
-        if (focusLevel == 0) {
-          if (ch == 'h' && tabs.index > 0) {
-            tabs.index--;
-            _updateFocus();
-          }
-          if (ch == 'l' && tabs.index < tabs.tabs.length - 1) {
-            tabs.index++;
-            _updateFocus();
-          }
-        }
-
-        if (focusLevel == 1 && tabs.index == 0) {
-          if (ch == 'h') {
-            bottomPane = 0;
-            _updateFocus();
-          }
-          if (ch == 'l') {
-            bottomPane = 1;
-            _updateFocus();
           }
         }
       } // End of printable character handling
@@ -732,7 +740,7 @@ class DemoApp extends TuiApp {
 
     // Get focus hint from active interactive component
     String hintText =
-        ' Focus: ${focusNames[focusLevel]} (j/k to switch, h/l sideways) ';
+        ' Focus: ${focusNames[focusLevel]} (↑↓ to switch, ←→ sideways, Tab toggle pane) ';
     if (focusLevel == 1) {
       final focusableComponents = currentFocusableComponents;
       if (focusableComponents.isNotEmpty) {
