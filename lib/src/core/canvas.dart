@@ -10,7 +10,7 @@ import 'style.dart';
 ///
 /// ```dart
 /// // Create a styled character cell
-/// final cell = TuiCell.fromChar('A', style: TuiStyle(fg: 1, bold: true));
+/// const cell = TuiCell(char: 'A', style: TuiStyle(fg: 1, bold: true));
 ///
 /// // Create an empty cell
 /// final empty = TuiCell.empty();
@@ -20,8 +20,8 @@ import 'style.dart';
 /// print(cell.isEmpty); // false
 /// ```
 class TuiCell {
-  /// The Unicode code point of the character in this cell.
-  final int codePoint;
+  /// The character(s) in this cell as a string (grapheme cluster).
+  final String char;
 
   /// The styling applied to this character.
   final TuiStyle style;
@@ -29,49 +29,34 @@ class TuiCell {
   /// Whether this cell is the trailing half of a wide (2-column) character.
   final bool wideContinuation;
 
-  /// Creates a cell with the specified [codePoint] and optional [style].
   const TuiCell({
-    required this.codePoint,
+    required this.char,
     this.style = const TuiStyle(),
     this.wideContinuation = false,
   });
 
-  /// Creates a cell from a string [char] with optional [style].
-  ///
-  /// If [char] is empty, defaults to a space character (code point 32).
-  /// If [char] has multiple characters, only the first rune is used.
-  TuiCell.fromChar(String char, {this.style = const TuiStyle()})
-    : codePoint = char.isNotEmpty ? char.runes.first : 32,
-      wideContinuation = false;
-
-  /// Creates an empty cell (space character) with optional [style].
   const TuiCell.empty({this.style = const TuiStyle()})
-    : codePoint = 32,
+    : char = ' ',
       wideContinuation = false;
 
-  /// The character as a string.
-  String get char => String.fromCharCode(codePoint);
+  bool get isEmpty => char == ' ' && !wideContinuation;
 
-  /// Whether this cell contains a space character.
-  bool get isEmpty => codePoint == 32;
-
-  /// Creates a copy of this cell with a different [newStyle].
   TuiCell withStyle(TuiStyle newStyle) {
-    return TuiCell(codePoint: codePoint, style: newStyle);
+    return TuiCell(char: char, style: newStyle);
   }
 
   @override
   bool operator ==(Object other) {
     if (identical(this, other)) return true;
     return other is TuiCell &&
-        other.codePoint == codePoint &&
+        other.char == char &&
         other.style == style &&
         other.wideContinuation == wideContinuation;
   }
 
   @override
   int get hashCode =>
-      codePoint.hashCode ^ style.hashCode ^ wideContinuation.hashCode;
+      char.hashCode ^ style.hashCode ^ wideContinuation.hashCode;
 }
 
 /// A 2D grid of character cells representing the terminal screen buffer.
@@ -137,25 +122,21 @@ class TuiSurface {
   /// Put a single character at the specified position
   void putChar(int x, int y, String char, {TuiStyle style = const TuiStyle()}) {
     if (char.isEmpty) return;
-    setCell(x, y, TuiCell.fromChar(char, style: style));
+    setCell(x, y, TuiCell(char: char, style: style));
   }
 
   /// Put text at the specified position, clipping to the surface bounds
   void putText(int x, int y, String text, {TuiStyle style = const TuiStyle()}) {
     var col = x;
-    for (final rune in text.runes) {
+    for (final cluster in _graphemeClusters(text)) {
       if (col >= width) break;
-      final charWidth = _isWideChar(rune) ? 2 : 1;
-      final ch = String.fromCharCode(rune);
-      putChar(col, y, ch, style: style);
+      final charWidth = displayWidth(cluster);
+      if (charWidth == 0) continue;
+      putChar(col, y, cluster, style: style);
       if (charWidth == 2) {
         final nextCol = col + 1;
         if (nextCol < width) {
-          setCell(
-            nextCol,
-            y,
-            const TuiCell(codePoint: 32, wideContinuation: true),
-          );
+          setCell(nextCol, y, const TuiCell(char: ' ', wideContinuation: true));
         }
       }
       col += charWidth;
@@ -172,20 +153,16 @@ class TuiSurface {
   }) {
     final limit = x + maxWidth;
     var col = x;
-    for (final rune in text.runes) {
+    for (final cluster in _graphemeClusters(text)) {
       if (col >= limit || col >= width) break;
-      final charWidth = _isWideChar(rune) ? 2 : 1;
+      final charWidth = displayWidth(cluster);
+      if (charWidth == 0) continue;
       if (col + charWidth > limit) break;
-      final ch = String.fromCharCode(rune);
-      putChar(col, y, ch, style: style);
+      putChar(col, y, cluster, style: style);
       if (charWidth == 2) {
         final nextCol = col + 1;
         if (nextCol < width) {
-          setCell(
-            nextCol,
-            y,
-            const TuiCell(codePoint: 32, wideContinuation: true),
-          );
+          setCell(nextCol, y, const TuiCell(char: ' ', wideContinuation: true));
         }
       }
       col += charWidth;
@@ -379,13 +356,27 @@ class TuiSurface {
         .join();
   }
 
-  /// Estimated display width of a string, accounting for wide characters.
+  /// Display width of a string, accounting for wide and zero-width characters.
   static int displayWidth(String text) {
     var w = 0;
     for (final rune in text.runes) {
+      if (_isZeroWidth(rune)) continue;
       w += _isWideChar(rune) ? 2 : 1;
     }
     return w;
+  }
+
+  static bool _isZeroWidth(int rune) {
+    if (rune >= 0xFE00 && rune <= 0xFE0F) return true; // Variation selectors
+    if (rune >= 0x200B && rune <= 0x200D) return true; // ZWS, ZWNJ, ZWJ
+    if (rune == 0xFEFF) return true; // BOM / ZWNBS
+    if (rune >= 0x0300 && rune <= 0x036F) return true; // Combining diacriticals
+    if (rune >= 0x1AB0 && rune <= 0x1AFF) return true; // Combining extended
+    if (rune >= 0x20D0 && rune <= 0x20FF) return true; // Combining for symbols
+    if (rune >= 0xE0100 && rune <= 0xE01EF) {
+      return true; // Variation selectors supplement
+    }
+    return false;
   }
 
   static bool _isWideChar(int rune) {
@@ -400,11 +391,30 @@ class TuiSurface {
     if (rune >= 0xFE30 && rune <= 0xFE6F) return true;
     if (rune >= 0xFF01 && rune <= 0xFF60) return true;
     if (rune >= 0xFFE0 && rune <= 0xFFE6) return true;
-    // Emoji and symbols (most are double-width)
+    // Emoji (Supplementary Multilingual Plane and above)
     if (rune >= 0x1F000) return true;
-    // Miscellaneous symbols
+    // Miscellaneous Symbols and Dingbats (many are wide in emoji presentation)
     if (rune >= 0x2600 && rune <= 0x27BF) return true;
     return false;
+  }
+
+  /// Split text into grapheme clusters, grouping base chars with modifiers.
+  static List<String> _graphemeClusters(String text) {
+    final clusters = <String>[];
+    final runes = text.runes.toList();
+    var i = 0;
+    while (i < runes.length) {
+      final buf = StringBuffer();
+      buf.writeCharCode(runes[i]);
+      i++;
+      // Attach following zero-width modifiers to this cluster
+      while (i < runes.length && _isZeroWidth(runes[i])) {
+        buf.writeCharCode(runes[i]);
+        i++;
+      }
+      clusters.add(buf.toString());
+    }
+    return clusters;
   }
 
   /// Apply dimming style to a rectangular region
@@ -425,10 +435,7 @@ class TuiSurface {
             italic: cell.style.italic,
             underline: cell.style.underline,
           );
-          _grid[cellY][cellX] = TuiCell(
-            codePoint: cell.codePoint,
-            style: dimmedStyle,
-          );
+          _grid[cellY][cellX] = TuiCell(char: cell.char, style: dimmedStyle);
         }
       }
     }
