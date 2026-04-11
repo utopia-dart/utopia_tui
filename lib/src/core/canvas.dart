@@ -39,9 +39,9 @@ class TuiCell {
   /// Creates a cell from a string [char] with optional [style].
   ///
   /// If [char] is empty, defaults to a space character (code point 32).
-  /// If [char] has multiple characters, only the first is used.
+  /// If [char] has multiple characters, only the first rune is used.
   TuiCell.fromChar(String char, {this.style = const TuiStyle()})
-    : codePoint = char.isNotEmpty ? char.codeUnitAt(0) : 32,
+    : codePoint = char.isNotEmpty ? char.runes.first : 32,
       wideContinuation = false;
 
   /// Creates an empty cell (space character) with optional [style].
@@ -142,9 +142,23 @@ class TuiSurface {
 
   /// Put text at the specified position, clipping to the surface bounds
   void putText(int x, int y, String text, {TuiStyle style = const TuiStyle()}) {
-    for (int i = 0; i < text.length; i++) {
-      if (x + i >= width) break;
-      putChar(x + i, y, text[i], style: style);
+    var col = x;
+    for (final rune in text.runes) {
+      if (col >= width) break;
+      final charWidth = _isWideChar(rune) ? 2 : 1;
+      final ch = String.fromCharCode(rune);
+      putChar(col, y, ch, style: style);
+      if (charWidth == 2) {
+        final nextCol = col + 1;
+        if (nextCol < width) {
+          setCell(
+            nextCol,
+            y,
+            const TuiCell(codePoint: 32, wideContinuation: true),
+          );
+        }
+      }
+      col += charWidth;
     }
   }
 
