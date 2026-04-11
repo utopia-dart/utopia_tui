@@ -250,14 +250,10 @@ const myTheme = TuiTheme(
 ```dart
 class MyCustomComponent extends TuiComponent {
   @override
-  void paint(TuiContext context, {
-    required int row,
-    required int col, 
-    required int width,
-    required int height
-  }) {
+  void paintSurface(TuiSurface surface, TuiRect rect) {
     // Custom rendering logic
-    context.writeRow(row, col, width, 'Custom content!');
+    surface.clearRect(rect.x, rect.y, rect.width, rect.height);
+    surface.putText(rect.x, rect.y, 'Custom content!');
   }
 }
 ```
