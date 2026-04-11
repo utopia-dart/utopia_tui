@@ -219,10 +219,7 @@ class TuiAlertDialog extends TuiDialog {
           TuiText(message!),
           TuiText(''), // Spacer
         ],
-        TuiRow(
-          children: [TuiText(''), button],
-          widths: const [-1, 10],
-        ),
+        TuiRow(children: [TuiText(''), button], widths: const [-1, 10]),
       ],
       heights: message != null ? const [-1, 1, 3] : const [3],
     );
@@ -279,12 +276,7 @@ class TuiConfirmDialog extends TuiDialog {
           TuiText(''), // Spacer
         ],
         TuiRow(
-          children: [
-            TuiText(''),
-            cancelButton,
-            TuiText(' '),
-            confirmButton,
-          ],
+          children: [TuiText(''), cancelButton, TuiText(' '), confirmButton],
           widths: const [-1, 10, 1, 10],
         ),
       ],
@@ -353,12 +345,7 @@ class TuiInputDialog extends TuiDialog {
         textInput,
         TuiText(''), // Spacer
         TuiRow(
-          children: [
-            TuiText(''),
-            cancelButton,
-            TuiText(' '),
-            confirmButton,
-          ],
+          children: [TuiText(''), cancelButton, TuiText(' '), confirmButton],
           widths: const [-1, 10, 1, 10],
         ),
       ],

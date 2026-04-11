@@ -106,7 +106,9 @@ class TuiList extends TuiComponent {
     final theme = this.theme;
     for (var i = 0; i < rect.height && i < items.length; i++) {
       final isSel = i == selectedIndex;
-      final prefix = isSel ? theme.listSelectedPrefix : theme.listUnselectedPrefix;
+      final prefix = isSel
+          ? theme.listSelectedPrefix
+          : theme.listUnselectedPrefix;
       final item = items[i];
       final text = ' $prefix $item ';
       final style = isSel

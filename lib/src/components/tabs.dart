@@ -47,8 +47,7 @@ class TuiTabs extends TuiComponent {
         x += tabWidth;
 
         // Add separator if not the last tab
-        if (i < tabs.length - 1 &&
-            x + separator.length <= rect.right) {
+        if (i < tabs.length - 1 && x + separator.length <= rect.right) {
           surface.putTextClip(x, rect.y, separator, separator.length);
           x += separator.length;
         }

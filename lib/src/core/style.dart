@@ -77,7 +77,13 @@ class TuiStyle {
 
   String apply(String text) {
     final buf = StringBuffer();
-    if (bold || italic || underline || fg != null || bg != null || fgRgb != null || bgRgb != null) {
+    if (bold ||
+        italic ||
+        underline ||
+        fg != null ||
+        bg != null ||
+        fgRgb != null ||
+        bgRgb != null) {
       buf.write('\x1b[');
       final parts = <String>[];
       if (bold) parts.add('1');
@@ -103,7 +109,13 @@ class TuiStyle {
   }
 
   String toAnsi() {
-    if (bold || italic || underline || fg != null || bg != null || fgRgb != null || bgRgb != null) {
+    if (bold ||
+        italic ||
+        underline ||
+        fg != null ||
+        bg != null ||
+        fgRgb != null ||
+        bgRgb != null) {
       final buf = StringBuffer();
       buf.write('\x1b[');
       final parts = <String>[];
@@ -128,7 +140,13 @@ class TuiStyle {
   }
 
   bool get isEmpty =>
-      !bold && !italic && !underline && fg == null && bg == null && fgRgb == null && bgRgb == null;
+      !bold &&
+      !italic &&
+      !underline &&
+      fg == null &&
+      bg == null &&
+      fgRgb == null &&
+      bgRgb == null;
 
   @override
   bool operator ==(Object other) {
@@ -144,7 +162,8 @@ class TuiStyle {
   }
 
   @override
-  int get hashCode => Object.hash(fg, bg, fgRgb, bgRgb, bold, italic, underline);
+  int get hashCode =>
+      Object.hash(fg, bg, fgRgb, bgRgb, bold, italic, underline);
 }
 
 // Strip ANSI escape sequences for width calculations.

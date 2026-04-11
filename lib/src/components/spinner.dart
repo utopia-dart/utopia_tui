@@ -32,6 +32,12 @@ class TuiSpinner extends TuiComponent {
     final effectiveStyle = style ?? const TuiStyle();
 
     // Draw the spinner frame
-    surface.putTextClip(rect.x, rect.y, frame, rect.width, style: effectiveStyle);
+    surface.putTextClip(
+      rect.x,
+      rect.y,
+      frame,
+      rect.width,
+      style: effectiveStyle,
+    );
   }
 }

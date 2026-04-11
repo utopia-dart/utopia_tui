@@ -9,12 +9,7 @@ class TuiStatusBar extends TuiComponent {
   String center;
   String right;
 
-  TuiStatusBar({
-    this.style,
-    this.left = '',
-    this.center = '',
-    this.right = '',
-  });
+  TuiStatusBar({this.style, this.left = '', this.center = '', this.right = ''});
 
   @override
   void paintSurface(TuiSurface surface, TuiRect rect) {

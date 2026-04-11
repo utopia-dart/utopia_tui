@@ -149,10 +149,17 @@ class TuiText extends TuiComponent {
     if (rect.isEmpty) return;
     surface.clearRect(rect.x, rect.y, rect.width, rect.height);
 
-    final lines = wrap ? _wrapText(text, rect.width) : text.split(RegExp(r"\r?\n"));
+    final lines = wrap
+        ? _wrapText(text, rect.width)
+        : text.split(RegExp(r"\r?\n"));
     for (var i = 0; i < rect.height && i < lines.length; i++) {
-      surface.putTextClip(rect.x, rect.y + i, lines[i], rect.width,
-        style: style ?? const TuiStyle());
+      surface.putTextClip(
+        rect.x,
+        rect.y + i,
+        lines[i],
+        rect.width,
+        style: style ?? const TuiStyle(),
+      );
     }
   }
 
@@ -552,9 +559,10 @@ class TuiCenter extends TuiComponent {
     final dx = (rect.width - w) ~/ 2;
     final dy = (rect.height - h) ~/ 2;
 
-    child.paintSurface(surface, TuiRect(
-      x: rect.x + dx, y: rect.y + dy, width: w, height: h,
-    ));
+    child.paintSurface(
+      surface,
+      TuiRect(x: rect.x + dx, y: rect.y + dy, width: w, height: h),
+    );
   }
 }
 

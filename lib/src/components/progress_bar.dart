@@ -70,6 +70,11 @@ class TuiProgressBar extends TuiComponent {
     }
 
     // Draw closing bracket
-    surface.putChar(rect.x + rect.width - 1, rect.y, ']', style: effectiveBarStyle);
+    surface.putChar(
+      rect.x + rect.width - 1,
+      rect.y,
+      ']',
+      style: effectiveBarStyle,
+    );
   }
 }
