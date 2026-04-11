@@ -1,7 +1,6 @@
-import 'package:dart_console/dart_console.dart' as dc;
+import 'dart:io';
 
-/// Minimal terminal abstraction so utopia_tui is not tightly coupled to
-/// dart_console APIs.
+/// Minimal terminal abstraction using dart:io directly.
 abstract class TuiTerminalInterface {
   int get width;
   int get height;
@@ -15,30 +14,33 @@ abstract class TuiTerminalInterface {
 }
 
 class TuiTerminal implements TuiTerminalInterface {
-  final dc.Console _console = dc.Console();
+  @override
+  int get width => stdout.terminalColumns;
 
   @override
-  int get width => _console.windowWidth;
+  int get height => stdout.terminalLines;
 
   @override
-  int get height => _console.windowHeight;
+  void hideCursor() => stdout.write('\x1b[?25l');
 
   @override
-  void hideCursor() => _console.hideCursor();
+  void showCursor() => stdout.write('\x1b[?25h');
 
   @override
-  void showCursor() => _console.showCursor();
-
-  @override
-  void clearScreen() => _console.clearScreen();
+  void clearScreen() => stdout.write('\x1b[2J\x1b[H');
 
   @override
   void setCursor(int row, int col) =>
-      _console.cursorPosition = dc.Coordinate(row, col);
+      stdout.write('\x1b[${row + 1};${col + 1}H');
 
   @override
-  void write(String text) => _console.write(text);
+  void write(String text) => stdout.write(text);
 
   @override
-  void resetRawMode() => _console.rawMode = false;
+  void resetRawMode() {
+    try {
+      stdin.lineMode = true;
+      stdin.echoMode = true;
+    } catch (_) {}
+  }
 }
