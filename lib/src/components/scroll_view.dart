@@ -124,41 +124,34 @@ class TuiScrollView extends TuiInteractiveComponent {
         continue;
       }
 
-      if (line.length <= width) {
+      if (TuiSurface.displayWidth(line) <= width) {
         out.add(line);
       } else {
-        // Word wrapping
         final words = line.split(' ');
         var currentLine = '';
+        var currentWidth = 0;
 
         for (final word in words) {
+          final wordWidth = TuiSurface.displayWidth(word);
           if (currentLine.isEmpty) {
-            if (word.length <= width) {
+            if (wordWidth <= width) {
               currentLine = word;
+              currentWidth = wordWidth;
             } else {
-              // Word is longer than width, break it
-              var start = 0;
-              while (start < word.length) {
-                final end = (start + width).clamp(0, word.length);
-                out.add(word.substring(start, end));
-                start = end;
-              }
+              _breakLongWord(word, width, out);
             }
-          } else if (currentLine.length + 1 + word.length <= width) {
+          } else if (currentWidth + 1 + wordWidth <= width) {
             currentLine += ' $word';
+            currentWidth += 1 + wordWidth;
           } else {
             out.add(currentLine);
-            if (word.length <= width) {
+            if (wordWidth <= width) {
               currentLine = word;
+              currentWidth = wordWidth;
             } else {
-              // Word is longer than width, break it
               currentLine = '';
-              var start = 0;
-              while (start < word.length) {
-                final end = (start + width).clamp(0, word.length);
-                out.add(word.substring(start, end));
-                start = end;
-              }
+              currentWidth = 0;
+              _breakLongWord(word, width, out);
             }
           }
         }
@@ -169,6 +162,24 @@ class TuiScrollView extends TuiInteractiveComponent {
       }
     }
     return out;
+  }
+
+  void _breakLongWord(String word, int width, List<String> out) {
+    var buf = StringBuffer();
+    var bufWidth = 0;
+    for (final rune in word.runes) {
+      final charWidth = TuiSurface.displayWidth(String.fromCharCode(rune));
+      if (bufWidth + charWidth > width && bufWidth > 0) {
+        out.add(buf.toString());
+        buf = StringBuffer();
+        bufWidth = 0;
+      }
+      buf.writeCharCode(rune);
+      bufWidth += charWidth;
+    }
+    if (bufWidth > 0) {
+      out.add(buf.toString());
+    }
   }
 
   @override

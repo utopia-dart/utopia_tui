@@ -136,7 +136,7 @@ class TuiSurface {
     }
   }
 
-  /// Put text clipped to a specific width
+  /// Put text clipped to a specific width, accounting for wide characters
   void putTextClip(
     int x,
     int y,
@@ -144,10 +144,16 @@ class TuiSurface {
     int maxWidth, {
     TuiStyle style = const TuiStyle(),
   }) {
-    final clippedText = text.length > maxWidth
-        ? text.substring(0, maxWidth)
-        : text;
-    putText(x, y, clippedText, style: style);
+    final limit = x + maxWidth;
+    var col = x;
+    for (final rune in text.runes) {
+      if (col >= limit || col >= width) break;
+      final charWidth = _isWideChar(rune) ? 2 : 1;
+      if (col + charWidth > limit) break;
+      final ch = String.fromCharCode(rune);
+      putChar(col, y, ch, style: style);
+      col += charWidth;
+    }
   }
 
   /// Draw a horizontal line
@@ -330,6 +336,34 @@ class TuiSurface {
   String getRowString(int row) {
     if (row < 0 || row >= height) return '';
     return _grid[row].map((cell) => cell.char).join();
+  }
+
+  /// Estimated display width of a string, accounting for wide characters.
+  static int displayWidth(String text) {
+    var w = 0;
+    for (final rune in text.runes) {
+      w += _isWideChar(rune) ? 2 : 1;
+    }
+    return w;
+  }
+
+  static bool _isWideChar(int rune) {
+    // CJK Unified Ideographs, CJK Compatibility, Fullwidth Forms
+    if (rune >= 0x1100 && rune <= 0x115F) return true;
+    if (rune >= 0x2E80 && rune <= 0x303E) return true;
+    if (rune >= 0x3040 && rune <= 0x33BF) return true;
+    if (rune >= 0x3400 && rune <= 0x4DBF) return true;
+    if (rune >= 0x4E00 && rune <= 0xA4CF) return true;
+    if (rune >= 0xAC00 && rune <= 0xD7AF) return true;
+    if (rune >= 0xF900 && rune <= 0xFAFF) return true;
+    if (rune >= 0xFE30 && rune <= 0xFE6F) return true;
+    if (rune >= 0xFF01 && rune <= 0xFF60) return true;
+    if (rune >= 0xFFE0 && rune <= 0xFFE6) return true;
+    // Emoji and symbols (most are double-width)
+    if (rune >= 0x1F000) return true;
+    // Miscellaneous symbols
+    if (rune >= 0x2600 && rune <= 0x27BF) return true;
+    return false;
   }
 
   /// Apply dimming style to a rectangular region
