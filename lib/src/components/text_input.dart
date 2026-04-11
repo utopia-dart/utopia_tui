@@ -63,16 +63,14 @@ class TuiTextInput extends TuiInteractiveComponent {
     if (!focused) return false;
 
     if (event is TuiKeyEvent && event.isPrintable) {
-      final ch = event.char!.toLowerCase();
-
-      if (ch == 'e') {
-        editMode = !editMode;
+      if (editMode) {
+        TuiBindings.textEdit(event, this);
         markNeedsRebuild();
         return true;
       }
 
-      if (editMode) {
-        TuiBindings.textEdit(event, this);
+      if (event.char!.toLowerCase() == 'e') {
+        editMode = true;
         markNeedsRebuild();
         return true;
       }

@@ -50,12 +50,6 @@ class TuiScrollView extends TuiInteractiveComponent {
     if (event is TuiKeyEvent && event.isPrintable) {
       final ch = event.char!.toLowerCase();
 
-      if (ch == 'e') {
-        scrollMode = !scrollMode;
-        markNeedsRebuild();
-        return true;
-      }
-
       if (scrollMode) {
         switch (ch) {
           case 'j':
@@ -71,6 +65,10 @@ class TuiScrollView extends TuiInteractiveComponent {
             markNeedsRebuild();
             return true;
         }
+      } else if (ch == 'e') {
+        scrollMode = true;
+        markNeedsRebuild();
+        return true;
       }
     }
 
