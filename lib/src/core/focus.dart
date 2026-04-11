@@ -107,13 +107,13 @@ class TuiFocusManager {
   void _syncFocus() {
     _setAllFocus(root, false);
     final comp = focusedComponent;
-    if (comp != null) comp.focused = true;
+    if (comp != null) comp.setFocus(true);
   }
 
   void _setAllFocus(TuiFocusNode node, bool value) {
     switch (node) {
       case TuiFocusLeaf(:final component):
-        component.focused = value;
+        component.setFocus(value);
       case _TuiFocusGroup(:final children):
         for (final child in children) {
           _setAllFocus(child, value);

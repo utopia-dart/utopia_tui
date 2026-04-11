@@ -56,6 +56,8 @@ class DemoApp extends TuiApp {
 
   // Focus management
   late TuiFocusManager focus;
+  int _lastTabIndex = -1;
+  int _lastMenuIndex = -1;
 
   DemoApp() {
     _buildFocusTree();
@@ -110,6 +112,11 @@ class DemoApp extends TuiApp {
   }
 
   void _rebuildFocus() {
+    if (_lastTabIndex == tabs.index && _lastMenuIndex == menu.selectedIndex) {
+      return;
+    }
+    _lastTabIndex = tabs.index;
+    _lastMenuIndex = menu.selectedIndex;
     final currentId = focus.focusedId;
     _buildFocusTree();
     if (currentId != null) focus.focusById(currentId);
@@ -317,6 +324,8 @@ class DemoApp extends TuiApp {
       selectedStyle: theme.accent,
       unselectedStyle: theme.dim,
     );
+    // Force rebuild since components were recreated
+    _lastTabIndex = -1;
     _rebuildFocus();
   }
 
