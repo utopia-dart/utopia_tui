@@ -3,12 +3,13 @@ import '../core/component.dart';
 import '../core/canvas.dart';
 import '../core/rect.dart';
 
-class TuiTabs {
+class TuiTabs extends TuiComponent {
   final List<String> tabs;
   int index;
   final TuiStyle? activeStyle;
   final TuiStyle? inactiveStyle;
   final String separator;
+  bool focused;
 
   TuiTabs(
     this.tabs, {
@@ -16,6 +17,7 @@ class TuiTabs {
     this.activeStyle,
     this.inactiveStyle,
     this.separator = '  ',
+    this.focused = false,
   });
 
   String render(int width, {bool focused = false}) {
@@ -37,14 +39,6 @@ class TuiTabs {
         ? line.substring(0, width)
         : line.padRight(width);
   }
-}
-
-/// Surface-based tabs component for the new rendering system
-class TuiTabsView extends TuiComponent {
-  final TuiTabs tabs;
-  final bool focused;
-
-  TuiTabsView(this.tabs, {this.focused = false});
 
   @override
   void paintSurface(TuiSurface surface, TuiRect rect) {
@@ -55,15 +49,15 @@ class TuiTabsView extends TuiComponent {
 
     // Render each tab with proper styling
     var x = rect.x;
-    for (var i = 0; i < tabs.tabs.length && x < rect.right; i++) {
-      final label = ' ${tabs.tabs[i]} ';
+    for (var i = 0; i < tabs.length && x < rect.right; i++) {
+      final label = ' ${tabs[i]} ';
 
       TuiStyle style;
-      if (i == tabs.index) {
-        final base = tabs.activeStyle ?? const TuiStyle();
+      if (i == index) {
+        final base = activeStyle ?? const TuiStyle();
         style = focused ? base.merge(const TuiStyle(underline: true)) : base;
       } else {
-        style = tabs.inactiveStyle ?? const TuiStyle();
+        style = inactiveStyle ?? const TuiStyle();
       }
 
       // Put the tab text with style
@@ -73,10 +67,10 @@ class TuiTabsView extends TuiComponent {
         x += tabWidth;
 
         // Add separator if not the last tab
-        if (i < tabs.tabs.length - 1 &&
-            x + tabs.separator.length <= rect.right) {
-          surface.putTextClip(x, rect.y, tabs.separator, tabs.separator.length);
-          x += tabs.separator.length;
+        if (i < tabs.length - 1 &&
+            x + separator.length <= rect.right) {
+          surface.putTextClip(x, rect.y, separator, separator.length);
+          x += separator.length;
         }
       }
     }

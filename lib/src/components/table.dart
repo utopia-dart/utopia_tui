@@ -3,15 +3,19 @@ import '../core/component.dart';
 import '../core/canvas.dart';
 import '../core/rect.dart';
 
-class TuiTable {
+class TuiTable extends TuiComponent {
   final List<String> headers;
   final List<List<String>> rows;
-  final List<int> columnWidths; // visible widths
+  final List<int> columnWidths;
+  TuiStyle? headerStyle;
+  TuiStyle? rowStyle;
 
   TuiTable({
     required this.headers,
     required this.rows,
     required this.columnWidths,
+    this.headerStyle,
+    this.rowStyle,
   });
 
   List<String> render(int totalWidth) {
@@ -37,15 +41,6 @@ class TuiTable {
     }
     return out;
   }
-}
-
-/// Surface-based table component for the new rendering system
-class TuiTableView extends TuiComponent {
-  final TuiTable table;
-  final TuiStyle? headerStyle;
-  final TuiStyle? rowStyle;
-
-  TuiTableView(this.table, {this.headerStyle, this.rowStyle});
 
   @override
   void paintSurface(TuiSurface surface, TuiRect rect) {
@@ -57,20 +52,20 @@ class TuiTableView extends TuiComponent {
     int y = rect.y;
 
     // Render header if there's space
-    if (y < rect.bottom && table.headers.isNotEmpty) {
+    if (y < rect.bottom && headers.isNotEmpty) {
       _renderRow(
         surface,
         rect.x,
         y,
         rect.width,
-        table.headers,
+        headers,
         headerStyle ?? const TuiStyle(bold: true),
       );
       y++;
     }
 
     // Render data rows
-    for (final row in table.rows) {
+    for (final row in rows) {
       if (y >= rect.bottom) break;
       _renderRow(
         surface,
@@ -93,10 +88,10 @@ class TuiTableView extends TuiComponent {
     TuiStyle style,
   ) {
     int currentX = x;
-    for (var i = 0; i < table.columnWidths.length; i++) {
+    for (var i = 0; i < columnWidths.length; i++) {
       if (currentX >= x + width) break;
 
-      final colWidth = table.columnWidths[i];
+      final colWidth = columnWidths[i];
       final cell = i < cells.length ? cells[i] : '';
       final availableWidth = (x + width - currentX).clamp(0, colWidth);
 
@@ -105,7 +100,7 @@ class TuiTableView extends TuiComponent {
         currentX += colWidth;
 
         // Add separator space if not the last column and there's space
-        if (i < table.columnWidths.length - 1 && currentX < x + width) {
+        if (i < columnWidths.length - 1 && currentX < x + width) {
           surface.putChar(currentX, y, ' ');
           currentX++;
         }

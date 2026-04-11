@@ -3,7 +3,7 @@ import '../core/component.dart';
 import '../core/canvas.dart';
 import '../core/rect.dart';
 
-class TuiProgressBar {
+class TuiProgressBar extends TuiComponent {
   double value; // 0.0 .. 1.0
   final TuiStyle? barStyle;
   final TuiStyle? fillStyle;
@@ -31,13 +31,6 @@ class TuiProgressBar {
     if (barStyle != null) bar = barStyle!.apply(bar);
     return bar;
   }
-}
-
-/// Surface-based progress bar component for the new rendering system
-class TuiProgressBarView extends TuiComponent {
-  final TuiProgressBar progressBar;
-
-  TuiProgressBarView(this.progressBar);
 
   @override
   void paintSurface(TuiSurface surface, TuiRect rect) {
@@ -48,21 +41,21 @@ class TuiProgressBarView extends TuiComponent {
 
     // Calculate fill
     final inner = (rect.width - 2).clamp(1, rect.width - 2);
-    final filled = (progressBar.value.clamp(0, 1) * inner).round();
+    final filled = (value.clamp(0, 1) * inner).round();
     final empty = inner - filled;
 
     // Draw opening bracket
-    final barStyle = progressBar.barStyle ?? const TuiStyle();
-    surface.putChar(rect.x, rect.y, '[', style: barStyle);
+    final effectiveBarStyle = barStyle ?? const TuiStyle();
+    surface.putChar(rect.x, rect.y, '[', style: effectiveBarStyle);
 
     // Draw filled portion
-    final fillStyle = progressBar.fillStyle ?? const TuiStyle();
+    final effectiveFillStyle = fillStyle ?? const TuiStyle();
     for (int i = 0; i < filled; i++) {
       surface.putChar(
         rect.x + 1 + i,
         rect.y,
-        progressBar.fillChar,
-        style: fillStyle,
+        fillChar,
+        style: effectiveFillStyle,
       );
     }
 
@@ -71,12 +64,12 @@ class TuiProgressBarView extends TuiComponent {
       surface.putChar(
         rect.x + 1 + filled + i,
         rect.y,
-        progressBar.emptyChar,
-        style: fillStyle,
+        emptyChar,
+        style: effectiveFillStyle,
       );
     }
 
     // Draw closing bracket
-    surface.putChar(rect.x + rect.width - 1, rect.y, ']', style: barStyle);
+    surface.putChar(rect.x + rect.width - 1, rect.y, ']', style: effectiveBarStyle);
   }
 }

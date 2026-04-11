@@ -1,6 +1,9 @@
+import '../core/component.dart';
+import '../core/canvas.dart';
+import '../core/rect.dart';
 import '../core/style.dart';
 
-class TuiTextInput {
+class TuiTextInput extends TuiComponent {
   String text;
   int cursor; // 0..text.length
   final int maxLength;
@@ -69,5 +72,31 @@ class TuiTextInput {
 
     final boxed = showBox ? '[$inside]' : inside;
     return boxed;
+  }
+
+  @override
+  void paintSurface(TuiSurface surface, TuiRect rect) {
+    if (rect.isEmpty) return;
+    surface.clearRect(rect.x, rect.y, rect.width, rect.height);
+    if (showBox) {
+      surface.putText(rect.x, rect.y, '[');
+      surface.putText(rect.x + rect.width - 1, rect.y, ']');
+    }
+    final textX = showBox ? rect.x + 1 : rect.x;
+    final textWidth = showBox ? rect.width - 2 : rect.width;
+    var displayText = text;
+    if (displayText.length > textWidth) {
+      final start = (cursor - textWidth + 1).clamp(0, displayText.length);
+      displayText = displayText.substring(start);
+    }
+    surface.putTextClip(textX, rect.y, displayText, textWidth);
+    if (blinkOn) {
+      final cursorPos = cursor.clamp(0, textWidth - 1);
+      final cursorX = textX + cursorPos;
+      if (cursorX < rect.x + rect.width) {
+        final cStyle = cursorStyle ?? const TuiStyle(bg: 255);
+        surface.putText(cursorX, rect.y, ' ', style: cStyle);
+      }
+    }
   }
 }

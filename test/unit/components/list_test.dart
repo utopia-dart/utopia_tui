@@ -166,21 +166,13 @@ void main() {
     });
   });
 
-  group('TuiListView', () {
-    test('constructor sets list correctly', () {
-      final list = TuiList(['A', 'B']);
-      final listView = TuiListView(list);
-
-      expect(listView.list, equals(list));
-    });
-
+  group('TuiList.paintSurface', () {
     test('paintSurface renders list content', () {
       final list = TuiList(['Alpha', 'Beta'], selectedIndex: 1);
-      final listView = TuiListView(list);
       final surface = TuiSurface(width: 10, height: 3);
       final rect = TuiRect(x: 0, y: 0, width: 10, height: 3);
 
-      listView.paintSurface(surface, rect);
+      list.paintSurface(surface, rect);
 
       // Check that content was rendered
       final lines = surface.toAnsiLines();
@@ -190,17 +182,15 @@ void main() {
 
     test('paintSurface handles empty rect', () {
       final list = TuiList(['Alpha']);
-      final listView = TuiListView(list);
       final surface = TuiSurface(width: 10, height: 3);
       final rect = TuiRect(x: 0, y: 0, width: 0, height: 0);
 
       // Should not throw
-      listView.paintSurface(surface, rect);
+      list.paintSurface(surface, rect);
     });
 
     test('paintSurface clears the area before rendering', () {
       final list = TuiList(['A']);
-      final listView = TuiListView(list);
       final surface = TuiSurface(width: 5, height: 2);
       final rect = TuiRect(x: 0, y: 0, width: 5, height: 2);
 
@@ -208,7 +198,7 @@ void main() {
       surface.putChar(0, 0, 'X');
       surface.putChar(1, 0, 'Y');
 
-      listView.paintSurface(surface, rect);
+      list.paintSurface(surface, rect);
 
       // Should be cleared and replaced with list content
       final lines = surface.toAnsiLines();
@@ -218,11 +208,10 @@ void main() {
 
     test('paintSurface respects rect boundaries', () {
       final list = TuiList(['Alpha', 'Beta', 'Gamma']);
-      final listView = TuiListView(list);
       final surface = TuiSurface(width: 10, height: 5);
       final rect = TuiRect(x: 2, y: 1, width: 6, height: 2);
 
-      listView.paintSurface(surface, rect);
+      list.paintSurface(surface, rect);
 
       // Content should only appear within the specified rect
       expect(surface.getCell(1, 1).char, equals(' ')); // Outside rect (left)

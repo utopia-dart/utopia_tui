@@ -3,7 +3,6 @@ import '../core/canvas.dart';
 import '../core/rect.dart';
 import '../core/events.dart';
 import 'list_menu.dart';
-import 'list_view.dart';
 
 /// Interactive menu with enhanced navigation
 class TuiInteractiveMenu extends TuiInteractiveComponent {
@@ -52,6 +51,6 @@ class TuiInteractiveMenu extends TuiInteractiveComponent {
 
   @override
   void paintSurface(TuiSurface surface, TuiRect rect) {
-    TuiListView(menu).paintSurface(surface, rect);
+    menu.paintSurface(surface, rect);
   }
 }

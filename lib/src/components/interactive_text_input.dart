@@ -4,7 +4,6 @@ import '../core/rect.dart';
 import '../core/events.dart';
 import '../core/bindings.dart';
 import 'text_input.dart';
-import 'text_input_view.dart';
 
 /// Interactive text input with enhanced input handling
 class TuiInteractiveTextInput extends TuiInteractiveComponent {
@@ -67,6 +66,6 @@ class TuiInteractiveTextInput extends TuiInteractiveComponent {
 
   @override
   void paintSurface(TuiSurface surface, TuiRect rect) {
-    TuiTextInputView(textInput).paintSurface(surface, rect);
+    textInput.paintSurface(surface, rect);
   }
 }

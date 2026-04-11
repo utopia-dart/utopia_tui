@@ -3,9 +3,18 @@ import '../core/component.dart';
 import '../core/canvas.dart';
 import '../core/rect.dart';
 
-class TuiStatusBar {
-  final TuiStyle? style;
-  TuiStatusBar({this.style});
+class TuiStatusBar extends TuiComponent {
+  TuiStyle? style;
+  String left;
+  String center;
+  String right;
+
+  TuiStatusBar({
+    this.style,
+    this.left = '',
+    this.center = '',
+    this.right = '',
+  });
 
   String render(
     int width, {
@@ -25,21 +34,6 @@ class TuiStatusBar {
     if (line.length > width) line = line.substring(0, width);
     return style?.apply(line) ?? line;
   }
-}
-
-/// Surface-based status bar component for the new rendering system
-class TuiStatusBarView extends TuiComponent {
-  final TuiStyle? style;
-  final String left;
-  final String center;
-  final String right;
-
-  TuiStatusBarView({
-    this.style,
-    this.left = '',
-    this.center = '',
-    this.right = '',
-  });
 
   @override
   void paintSurface(TuiSurface surface, TuiRect rect) {

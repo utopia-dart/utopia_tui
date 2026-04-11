@@ -1,3 +1,6 @@
+import '../core/component.dart';
+import '../core/canvas.dart';
+import '../core/rect.dart';
 import '../core/theme.dart';
 import '../core/style.dart';
 
@@ -23,7 +26,7 @@ import '../core/style.dart';
 /// // Render to strings
 /// final lines = list.render(20, 10);
 /// ```
-class TuiList {
+class TuiList extends TuiComponent {
   /// The list of items to display.
   final List<String> items;
 
@@ -94,5 +97,22 @@ class TuiList {
       }
     }
     return out;
+  }
+
+  @override
+  void paintSurface(TuiSurface surface, TuiRect rect) {
+    if (rect.isEmpty) return;
+    surface.clearRect(rect.x, rect.y, rect.width, rect.height);
+    final theme = this.theme;
+    for (var i = 0; i < rect.height && i < items.length; i++) {
+      final isSel = i == selectedIndex;
+      final prefix = isSel ? theme.listSelectedPrefix : theme.listUnselectedPrefix;
+      final item = items[i];
+      final text = ' $prefix $item ';
+      final style = isSel
+          ? (selectedStyle ?? const TuiStyle())
+          : (unselectedStyle ?? const TuiStyle());
+      surface.putTextClip(rect.x, rect.y + i, text, rect.width, style: style);
+    }
   }
 }

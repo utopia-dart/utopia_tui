@@ -38,7 +38,6 @@ import '../core/theme.dart';
 import 'composition.dart';
 import 'button.dart';
 import 'text_input.dart';
-import 'text_input_view.dart';
 
 /// Result returned when a dialog is dismissed.
 enum TuiDialogResult {
@@ -221,7 +220,7 @@ class TuiAlertDialog extends TuiDialog {
           TuiText(''), // Spacer
         ],
         TuiRow(
-          children: [TuiText(''), TuiButtonView(button)],
+          children: [TuiText(''), button],
           widths: const [-1, 10],
         ),
       ],
@@ -282,9 +281,9 @@ class TuiConfirmDialog extends TuiDialog {
         TuiRow(
           children: [
             TuiText(''),
-            TuiButtonView(cancelButton),
+            cancelButton,
             TuiText(' '),
-            TuiButtonView(confirmButton),
+            confirmButton,
           ],
           widths: const [-1, 10, 1, 10],
         ),
@@ -351,14 +350,14 @@ class TuiInputDialog extends TuiDialog {
           TuiText(message!),
           TuiText(''), // Spacer
         ],
-        TuiTextInputView(textInput),
+        textInput,
         TuiText(''), // Spacer
         TuiRow(
           children: [
             TuiText(''),
-            TuiButtonView(cancelButton),
+            cancelButton,
             TuiText(' '),
-            TuiButtonView(confirmButton),
+            confirmButton,
           ],
           widths: const [-1, 10, 1, 10],
         ),
