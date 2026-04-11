@@ -61,27 +61,33 @@ class DemoApp extends TuiApp {
     _buildFocusTree();
   }
 
+  final _contentPlaceholder = TuiFocusPlaceholder();
+
   void _buildFocusTree() {
     if (tabs.index == 0) {
       // Example tab: tabs row → [menu | content]
-      TuiFocusNode? contentNode;
       final selected = menu.items[menu.selectedIndex];
-      if (selected == 'TextInput') {
-        contentNode = TuiFocusNode.leaf(id: 'content', component: input);
-      } else if (selected == 'ScrollView') {
-        contentNode = TuiFocusNode.leaf(id: 'content', component: scroll);
+      TuiInteractiveComponent contentComponent;
+      switch (selected) {
+        case 'TextInput':
+          contentComponent = input;
+        case 'ScrollView':
+          contentComponent = scroll;
+        default:
+          contentComponent = _contentPlaceholder;
       }
-
-      final bottomChildren = <TuiFocusNode>[
-        TuiFocusNode.leaf(id: 'menu', component: menu),
-        if (contentNode != null) contentNode,
-      ];
 
       focus = TuiFocusManager(
         root: TuiFocusNode.column(
           children: [
             TuiFocusNode.leaf(id: 'tabs', component: tabs),
-            TuiFocusNode.row(id: 'panes', children: bottomChildren),
+            TuiFocusNode.row(
+              id: 'panes',
+              children: [
+                TuiFocusNode.leaf(id: 'menu', component: menu),
+                TuiFocusNode.leaf(id: 'content', component: contentComponent),
+              ],
+            ),
           ],
         ),
       );

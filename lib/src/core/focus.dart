@@ -1,7 +1,17 @@
 import 'interactive.dart';
+import 'canvas.dart';
+import 'rect.dart';
 import 'events.dart';
 
 enum FocusDirection { up, down, left, right }
+
+/// A focusable placeholder that doesn't consume input.
+/// Use in focus trees where a pane should be focusable for visual
+/// highlighting but has no interactive component.
+class TuiFocusPlaceholder extends TuiInteractiveComponent {
+  @override
+  void paintSurface(TuiSurface surface, TuiRect rect) {}
+}
 
 sealed class TuiFocusNode {
   final String? id;
