@@ -321,6 +321,10 @@ class TuiSurface {
     return lines;
   }
 
+  List<String> toPlainLines() {
+    return List.generate(height, (row) => getRowString(row));
+  }
+
   /// Get a row as a string (for debugging)
   String getRowString(int row) {
     if (row < 0 || row >= height) return '';
@@ -339,7 +343,10 @@ class TuiSurface {
           final dimmedStyle = TuiStyle(
             fg: dimStyle.fg ?? cell.style.fg,
             bg: dimStyle.bg ?? cell.style.bg,
+            fgRgb: dimStyle.fgRgb ?? cell.style.fgRgb,
+            bgRgb: dimStyle.bgRgb ?? cell.style.bgRgb,
             bold: cell.style.bold,
+            italic: cell.style.italic,
             underline: cell.style.underline,
           );
           _grid[cellY][cellX] = TuiCell(

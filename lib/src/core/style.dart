@@ -29,73 +29,70 @@ library;
 /// final styledText = style.apply('Hello World');
 /// ```
 class TuiStyle {
-  /// Foreground color (0-255), or null for default.
   final int? fg;
-
-  /// Background color (0-255), or null for default.
   final int? bg;
-
-  /// Whether text should be rendered in bold.
+  final (int, int, int)? fgRgb;
+  final (int, int, int)? bgRgb;
   final bool bold;
-
-  /// Whether text should be rendered in italic.
   final bool italic;
-
-  /// Whether text should be underlined.
   final bool underline;
 
-  /// Creates a new text style with the specified properties.
   const TuiStyle({
     this.fg,
     this.bg,
+    this.fgRgb,
+    this.bgRgb,
     this.bold = false,
     this.italic = false,
     this.underline = false,
   });
 
-  /// Creates a new style by merging this style with [other].
-  ///
-  /// Properties from [other] take precedence over properties from this style.
-  /// Boolean properties (bold, italic, underline) are combined with logical OR.
   TuiStyle merge(TuiStyle other) => TuiStyle(
     fg: other.fg ?? fg,
     bg: other.bg ?? bg,
+    fgRgb: other.fgRgb ?? fgRgb,
+    bgRgb: other.bgRgb ?? bgRgb,
     bold: bold || other.bold,
     italic: italic || other.italic,
     underline: underline || other.underline,
   );
 
-  /// Creates a copy of this style with the specified properties changed.
-  ///
-  /// Any properties not specified will retain their current values.
   TuiStyle copyWith({
     int? fg,
     int? bg,
+    (int, int, int)? fgRgb,
+    (int, int, int)? bgRgb,
     bool? bold,
     bool? italic,
     bool? underline,
   }) => TuiStyle(
     fg: fg ?? this.fg,
     bg: bg ?? this.bg,
+    fgRgb: fgRgb ?? this.fgRgb,
+    bgRgb: bgRgb ?? this.bgRgb,
     bold: bold ?? this.bold,
     italic: italic ?? this.italic,
     underline: underline ?? this.underline,
   );
 
-  /// Applies this style to the given [text] using ANSI escape sequences.
-  ///
-  /// Returns the text wrapped with appropriate ANSI codes for styling.
-  /// The text will be automatically reset to default styling at the end.
   String apply(String text) {
     final buf = StringBuffer();
-    if (bold || italic || underline || fg != null || bg != null) {
+    if (bold || italic || underline || fg != null || bg != null || fgRgb != null || bgRgb != null) {
       buf.write('\x1b[');
       final parts = <String>[];
       if (bold) parts.add('1');
       if (italic) parts.add('3');
       if (underline) parts.add('4');
-      if (fg != null) parts.add('38;5;$fg');
-      if (bg != null) parts.add('48;5;$bg');
+      if (fgRgb != null) {
+        parts.add('38;2;${fgRgb!.$1};${fgRgb!.$2};${fgRgb!.$3}');
+      } else if (fg != null) {
+        parts.add('38;5;$fg');
+      }
+      if (bgRgb != null) {
+        parts.add('48;2;${bgRgb!.$1};${bgRgb!.$2};${bgRgb!.$3}');
+      } else if (bg != null) {
+        parts.add('48;5;$bg');
+      }
       buf.write(parts.join(';'));
       buf.write('m');
       buf.write(text);
@@ -105,17 +102,24 @@ class TuiStyle {
     return text;
   }
 
-  /// Get the ANSI escape sequence for this style (without reset)
   String toAnsi() {
-    if (bold || italic || underline || fg != null || bg != null) {
+    if (bold || italic || underline || fg != null || bg != null || fgRgb != null || bgRgb != null) {
       final buf = StringBuffer();
       buf.write('\x1b[');
       final parts = <String>[];
       if (bold) parts.add('1');
       if (italic) parts.add('3');
       if (underline) parts.add('4');
-      if (fg != null) parts.add('38;5;$fg');
-      if (bg != null) parts.add('48;5;$bg');
+      if (fgRgb != null) {
+        parts.add('38;2;${fgRgb!.$1};${fgRgb!.$2};${fgRgb!.$3}');
+      } else if (fg != null) {
+        parts.add('38;5;$fg');
+      }
+      if (bgRgb != null) {
+        parts.add('48;2;${bgRgb!.$1};${bgRgb!.$2};${bgRgb!.$3}');
+      } else if (bg != null) {
+        parts.add('48;5;$bg');
+      }
       buf.write(parts.join(';'));
       buf.write('m');
       return buf.toString();
@@ -123,9 +127,8 @@ class TuiStyle {
     return '';
   }
 
-  /// Check if this style has any formatting
   bool get isEmpty =>
-      !bold && !italic && !underline && fg == null && bg == null;
+      !bold && !italic && !underline && fg == null && bg == null && fgRgb == null && bgRgb == null;
 
   @override
   bool operator ==(Object other) {
@@ -133,13 +136,15 @@ class TuiStyle {
     return other is TuiStyle &&
         other.fg == fg &&
         other.bg == bg &&
+        other.fgRgb == fgRgb &&
+        other.bgRgb == bgRgb &&
         other.bold == bold &&
         other.italic == italic &&
         other.underline == underline;
   }
 
   @override
-  int get hashCode => Object.hash(fg, bg, bold, italic, underline);
+  int get hashCode => Object.hash(fg, bg, fgRgb, bgRgb, bold, italic, underline);
 }
 
 // Strip ANSI escape sequences for width calculations.

@@ -138,32 +138,47 @@ class TuiColumn extends TuiComponent {
 /// TuiText('Line 1\nLine 2\nLine 3')
 /// ```
 class TuiText extends TuiComponent {
-  /// The text content to display.
   final String text;
-
-  /// Optional styling to apply to the text.
   final TuiStyle? style;
+  final bool wrap;
 
-  /// Creates a text component with the given [text] and optional [style].
-  TuiText(this.text, {this.style});
+  TuiText(this.text, {this.style, this.wrap = false});
 
   @override
   void paintSurface(TuiSurface surface, TuiRect rect) {
     if (rect.isEmpty) return;
-
     surface.clearRect(rect.x, rect.y, rect.width, rect.height);
 
-    final lines = text.split(RegExp(r"\r?\n"));
+    final lines = wrap ? _wrapText(text, rect.width) : text.split(RegExp(r"\r?\n"));
     for (var i = 0; i < rect.height && i < lines.length; i++) {
-      final line = lines[i];
-      surface.putTextClip(
-        rect.x,
-        rect.y + i,
-        line,
-        rect.width,
-        style: style ?? const TuiStyle(),
-      );
+      surface.putTextClip(rect.x, rect.y + i, lines[i], rect.width,
+        style: style ?? const TuiStyle());
     }
+  }
+
+  static List<String> _wrapText(String text, int width) {
+    if (width <= 0) return [];
+    final result = <String>[];
+    for (final paragraph in text.split(RegExp(r"\r?\n"))) {
+      if (paragraph.isEmpty) {
+        result.add('');
+        continue;
+      }
+      final words = paragraph.split(' ');
+      var line = '';
+      for (final word in words) {
+        if (line.isEmpty) {
+          line = word;
+        } else if (line.length + 1 + word.length <= width) {
+          line += ' $word';
+        } else {
+          result.add(line);
+          line = word;
+        }
+      }
+      if (line.isNotEmpty) result.add(line);
+    }
+    return result;
   }
 }
 
@@ -522,17 +537,52 @@ class TuiPadding extends TuiComponent {
 
 class TuiCenter extends TuiComponent {
   final TuiComponent child;
-  TuiCenter({required this.child});
+  final int? childWidth;
+  final int? childHeight;
+
+  TuiCenter({required this.child, this.childWidth, this.childHeight});
 
   @override
   void paintSurface(TuiSurface surface, TuiRect rect) {
     if (rect.isEmpty) return;
-
-    // Clear the area
     surface.clearRect(rect.x, rect.y, rect.width, rect.height);
 
-    // For now, just paint the child in the full rect
-    child.paintSurface(surface, rect);
+    final w = (childWidth ?? rect.width).clamp(0, rect.width);
+    final h = (childHeight ?? rect.height).clamp(0, rect.height);
+    final dx = (rect.width - w) ~/ 2;
+    final dy = (rect.height - h) ~/ 2;
+
+    child.paintSurface(surface, TuiRect(
+      x: rect.x + dx, y: rect.y + dy, width: w, height: h,
+    ));
+  }
+}
+
+class TuiDivider extends TuiComponent {
+  final bool vertical;
+  final String? char;
+  final TuiStyle? style;
+
+  TuiDivider({this.vertical = false, this.char, this.style});
+
+  @override
+  void paintSurface(TuiSurface surface, TuiRect rect) {
+    if (rect.isEmpty) return;
+    final ch = char ?? (vertical ? '│' : '─');
+    final s = style ?? const TuiStyle();
+    if (vertical) {
+      surface.vLine(rect.x, rect.y, rect.height, ch, style: s);
+    } else {
+      surface.hLine(rect.x, rect.y, rect.width, ch, style: s);
+    }
+  }
+}
+
+class TuiSpacer extends TuiComponent {
+  @override
+  void paintSurface(TuiSurface surface, TuiRect rect) {
+    if (rect.isEmpty) return;
+    surface.clearRect(rect.x, rect.y, rect.width, rect.height);
   }
 }
 
