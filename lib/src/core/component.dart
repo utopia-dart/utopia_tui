@@ -32,6 +32,31 @@ abstract class TuiComponent {
   /// for the component's rendering area.
   void paintSurface(TuiSurface surface, TuiRect rect);
 
+  /// Convenience method that paints this component using a [TuiContext].
+  ///
+  /// This is a shorthand for calling [paintSurface] with the context's surface
+  /// and a [TuiRect] constructed from the provided position and size parameters.
+  ///
+  /// Example:
+  /// ```dart
+  /// TuiPanelBox(
+  ///   title: ' Hello TUI! ',
+  ///   child: TuiText('Welcome!'),
+  /// ).paint(context, row: 2, col: 2, width: 30, height: 10);
+  /// ```
+  void paint(
+    TuiContext context, {
+    required int row,
+    required int col,
+    required int width,
+    required int height,
+  }) {
+    paintSurface(
+      context.surface,
+      TuiRect(x: col, y: row, width: width, height: height),
+    );
+  }
+
   /// Called when a global event occurs.
   ///
   /// Most components should extend [TuiInteractiveComponent] for input
