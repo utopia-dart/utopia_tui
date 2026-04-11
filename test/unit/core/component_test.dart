@@ -20,6 +20,8 @@ class _MockTerminal implements TuiTerminalInterface {
   void setCursor(int row, int col) {}
   @override
   void write(String text) {}
+  @override
+  void resetRawMode() {}
 }
 
 void main() {

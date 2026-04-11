@@ -265,10 +265,12 @@ class TuiRunner {
     await _keySub?.cancel();
     _keyPort?.close();
     _keyIsolate?.kill(priority: Isolate.immediate);
-    // Do not clear the screen; restore cursor + attributes and print newline
-    terminal.write('\x1b[0m'); // reset attributes
+    terminal.resetRawMode();
+    terminal.write('\x1b[0m');
+    terminal.clearScreen();
+    terminal.setCursor(0, 0);
     terminal.showCursor();
-    terminal.write('\n'); // ensure prompt appears on a new line
+    terminal.write('\n');
   }
 }
 

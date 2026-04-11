@@ -11,6 +11,7 @@ abstract class TuiTerminalInterface {
   void clearScreen();
   void setCursor(int row, int col);
   void write(String text);
+  void resetRawMode() {}
 }
 
 class TuiTerminal implements TuiTerminalInterface {
@@ -37,4 +38,7 @@ class TuiTerminal implements TuiTerminalInterface {
 
   @override
   void write(String text) => _console.write(text);
+
+  @override
+  void resetRawMode() => _console.rawMode = false;
 }
