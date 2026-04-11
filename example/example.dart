@@ -559,6 +559,42 @@ class DemoApp extends TuiApp {
           return;
         }
 
+        // Vim-style navigation (h/l for pane switching, j/k for focus)
+        if (ch == 'j' && focusLevel == 0) {
+          focusLevel = 1;
+          _updateFocus();
+          return;
+        }
+        if (ch == 'k' && focusLevel == 1) {
+          focusLevel = 0;
+          _updateFocus();
+          return;
+        }
+        if (focusLevel == 0) {
+          if (ch == 'h' && tabs.index > 0) {
+            tabs.index--;
+            _updateFocus();
+            return;
+          }
+          if (ch == 'l' && tabs.index < tabs.tabs.length - 1) {
+            tabs.index++;
+            _updateFocus();
+            return;
+          }
+        }
+        if (focusLevel == 1 && tabs.index == 0) {
+          if (ch == 'h' && bottomPane == 1) {
+            bottomPane = 0;
+            _updateFocus();
+            return;
+          }
+          if (ch == 'l' && bottomPane == 0) {
+            bottomPane = 1;
+            _updateFocus();
+            return;
+          }
+        }
+
         // Dialog shortcuts (only when Dialog is selected)
         if (tabs.index == 0 &&
             bottomPane == 1 &&
