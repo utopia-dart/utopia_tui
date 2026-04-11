@@ -48,17 +48,18 @@ class MenuSidebar extends TuiComponent {
   final TuiInteractiveMenu interactiveMenu;
   final String title;
   final TuiTheme theme;
+  final bool focused;
 
   MenuSidebar({
     required this.interactiveMenu,
     required this.title,
     required this.theme,
+    this.focused = false,
   });
 
   @override
   void paintSurface(TuiSurface surface, TuiRect rect) {
-    final borderStyle =
-        interactiveMenu.focused && theme.focusBorderStyle != null
+    final borderStyle = focused && theme.focusBorderStyle != null
         ? theme.focusBorderStyle
         : theme.borderStyle;
 
@@ -75,21 +76,19 @@ class MenuSidebar extends TuiComponent {
 class ContentArea extends TuiComponent {
   final String selectedComponent;
   final TuiTheme theme;
-  final TuiInteractiveComponent? activeInteractiveComponent;
+  final bool focused;
   final Map<String, dynamic> componentData;
 
   ContentArea({
     required this.selectedComponent,
     required this.theme,
-    required this.activeInteractiveComponent,
+    this.focused = false,
     required this.componentData,
   });
 
   @override
   void paintSurface(TuiSurface surface, TuiRect rect) {
-    final borderStyle =
-        (activeInteractiveComponent?.focused ?? false) &&
-            theme.focusBorderStyle != null
+    final borderStyle = focused && theme.focusBorderStyle != null
         ? theme.focusBorderStyle
         : theme.borderStyle;
 
@@ -806,28 +805,22 @@ class DemoApp extends TuiApp {
     // 3. Main content area
     if (tabs.index == 0) {
       // Example tab with sidebar
+      final leftFocused = focusLevel == 1 && bottomPane == 0;
+      final rightFocused = focusLevel == 1 && bottomPane == 1;
+
       final leftPanel = MenuSidebar(
         interactiveMenu: interactiveMenu,
         title: ' Menu ',
         theme: theme,
+        focused: leftFocused,
       );
 
-      // Determine active interactive component for right panel
-      TuiInteractiveComponent? activeInteractiveComponent;
       final selectedComp = menu.items[menu.selectedIndex];
-      switch (selectedComp) {
-        case 'TextInput':
-          activeInteractiveComponent = interactiveTextInput;
-          break;
-        case 'ScrollView':
-          activeInteractiveComponent = interactiveScrollView;
-          break;
-      }
 
       final rightPanel = ContentArea(
         selectedComponent: selectedComp,
         theme: theme,
-        activeInteractiveComponent: activeInteractiveComponent,
+        focused: rightFocused,
         componentData: {
           'input': input,
           'interactiveInput': interactiveTextInput,
