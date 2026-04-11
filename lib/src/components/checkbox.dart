@@ -3,7 +3,7 @@ import '../core/component.dart';
 import '../core/canvas.dart';
 import '../core/rect.dart';
 
-class TuiCheckbox {
+class TuiCheckbox extends TuiComponent {
   bool value;
   final String label;
   final TuiStyle? labelStyle;
@@ -27,13 +27,6 @@ class TuiCheckbox {
         ? line.substring(0, width)
         : line.padRight(width);
   }
-}
-
-/// Surface-based checkbox component for the new rendering system
-class TuiCheckboxView extends TuiComponent {
-  final TuiCheckbox checkbox;
-
-  TuiCheckboxView(this.checkbox);
 
   @override
   void paintSurface(TuiSurface surface, TuiRect rect) {
@@ -42,21 +35,21 @@ class TuiCheckboxView extends TuiComponent {
     // Clear the area
     surface.clearRect(rect.x, rect.y, rect.width, rect.height);
 
-    final box = checkbox.value ? '[x]' : '[ ]';
-    final boxStyle = checkbox.boxStyle ?? const TuiStyle();
-    final labelStyle = checkbox.labelStyle ?? const TuiStyle();
+    final box = value ? '[x]' : '[ ]';
+    final effectiveBoxStyle = boxStyle ?? const TuiStyle();
+    final effectiveLabelStyle = labelStyle ?? const TuiStyle();
 
     // Draw checkbox
-    surface.putTextClip(rect.x, rect.y, box, 3, style: boxStyle);
+    surface.putTextClip(rect.x, rect.y, box, 3, style: effectiveBoxStyle);
 
     // Draw label if there's space
-    if (checkbox.label.isNotEmpty && rect.width > 4) {
+    if (label.isNotEmpty && rect.width > 4) {
       surface.putTextClip(
         rect.x + 4,
         rect.y,
-        checkbox.label,
+        label,
         rect.width - 4,
-        style: labelStyle,
+        style: effectiveLabelStyle,
       );
     }
   }

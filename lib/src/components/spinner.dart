@@ -3,7 +3,7 @@ import '../core/component.dart';
 import '../core/canvas.dart';
 import '../core/rect.dart';
 
-class TuiSpinner {
+class TuiSpinner extends TuiComponent {
   final List<String> frames;
   int index = 0;
   final TuiStyle? style;
@@ -20,13 +20,6 @@ class TuiSpinner {
     final s = frames[index];
     return style != null ? style!.apply(s) : s;
   }
-}
-
-/// Surface-based spinner component for the new rendering system
-class TuiSpinnerView extends TuiComponent {
-  final TuiSpinner spinner;
-
-  TuiSpinnerView(this.spinner);
 
   @override
   void paintSurface(TuiSurface surface, TuiRect rect) {
@@ -35,10 +28,16 @@ class TuiSpinnerView extends TuiComponent {
     // Clear the area
     surface.clearRect(rect.x, rect.y, rect.width, rect.height);
 
-    final frame = spinner.frames[spinner.index];
-    final style = spinner.style ?? const TuiStyle();
+    final frame = frames[index];
+    final effectiveStyle = style ?? const TuiStyle();
 
     // Draw the spinner frame
-    surface.putTextClip(rect.x, rect.y, frame, rect.width, style: style);
+    surface.putTextClip(
+      rect.x,
+      rect.y,
+      frame,
+      rect.width,
+      style: effectiveStyle,
+    );
   }
 }

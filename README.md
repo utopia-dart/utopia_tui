@@ -71,7 +71,7 @@ final theme = TuiTheme.oceanic;  // Ocean-blue theme
 TuiSideBySidePanels(
   leftTitle: ' Menu ',
   rightTitle: ' Content ',
-  leftChild: TuiListView(myList),
+  leftChild: myList,
   rightChild: TuiText('Content goes here'),
   leftWidth: 30,
   theme: TuiTheme.dark,
@@ -293,29 +293,3 @@ MIT License - see LICENSE file for details.
 **Built with ❤️ for the Dart community**
 
 Transform your console applications from boring command-line tools into beautiful, interactive experiences! 🎨✨
-
-## Usage
-
-Check out the comprehensive example in `/example/example.dart` to see all components in action.
-
-```dart
-import 'package:utopia_tui/utopia_tui.dart';
-
-class MyApp extends TuiApp {
-  @override
-  void build(TuiContext context) {
-    TuiPanelBox(
-      title: 'Hello World',
-      child: TuiText('Welcome to Utopia TUI!'),
-    ).paintSurface(context.surface, context.rect);
-  }
-}
-
-void main() async {
-  await TuiRunner(MyApp()).run();
-}
-```
-
-## Contributing
-
-Contributions are welcome! Please feel free to submit issues and pull requests.

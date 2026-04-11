@@ -65,22 +65,18 @@ class TuiContext {
     _surface.clear();
   }
 
-  /// Captures the current surface content as ANSI-formatted strings.
+  /// Captures the current surface content as plain text strings.
   ///
-  /// Returns a list of strings, one per terminal row, with ANSI escape
-  /// sequences for styling and colors.
-  /// Captures the current surface content as ANSI-formatted strings.
-  ///
-  /// Returns a list of strings, one per terminal row, with ANSI escape
-  /// sequences for styling and colors.
+  /// Returns a list of strings, one per terminal row, without ANSI escape
+  /// sequences. For styled output, use [snapshotStyled].
   List<String> snapshot() {
-    return _surface.toAnsiLines();
+    return _surface.toPlainLines();
   }
 
-  /// Captures the current surface content as styled strings.
+  /// Captures the current surface content as ANSI-styled strings.
   ///
-  /// This is an alias for [snapshot] since the surface already includes
-  /// styling information in its ANSI output.
+  /// Returns a list of strings with ANSI escape sequences for styling
+  /// and colors. For plain text without styling, use [snapshot].
   List<String> snapshotStyled() {
     return _surface.toAnsiLines();
   }

@@ -4,48 +4,36 @@ import 'package:utopia_tui/src/core/style.dart';
 
 void main() {
   group('TuiCell', () {
-    test('constructor with codePoint creates cell correctly', () {
+    test('constructor creates cell correctly', () {
       const style = TuiStyle(bold: true);
-      const cell = TuiCell(codePoint: 65, style: style);
+      const cell = TuiCell(char: 'A', style: style);
 
-      expect(cell.codePoint, equals(65));
-      expect(cell.style, equals(style));
       expect(cell.char, equals('A'));
+      expect(cell.style, equals(style));
       expect(cell.isEmpty, isFalse);
     });
 
     test('default constructor creates empty cell', () {
-      const cell = TuiCell(codePoint: 32);
+      const cell = TuiCell(char: ' ');
 
-      expect(cell.codePoint, equals(32));
       expect(cell.style, equals(const TuiStyle()));
       expect(cell.char, equals(' '));
       expect(cell.isEmpty, isTrue);
-    });
-
-    test('fromChar constructor creates cell from character', () {
-      const style = TuiStyle(bold: true);
-      final cell = TuiCell.fromChar('A', style: style);
-
-      expect(cell.codePoint, equals(65));
-      expect(cell.style, equals(style));
-      expect(cell.char, equals('A'));
     });
 
     test('empty constructor creates space cell', () {
       const style = TuiStyle(fg: 31);
       const cell = TuiCell.empty(style: style);
 
-      expect(cell.codePoint, equals(32));
       expect(cell.style, equals(style));
       expect(cell.isEmpty, isTrue);
     });
 
     test('equality works correctly', () {
       const style = TuiStyle(bold: true);
-      const cell1 = TuiCell(codePoint: 65, style: style);
-      const cell2 = TuiCell(codePoint: 65, style: style);
-      const cell3 = TuiCell(codePoint: 66, style: style);
+      const cell1 = TuiCell(char: 'A', style: style);
+      const cell2 = TuiCell(char: 'A', style: style);
+      const cell3 = TuiCell(char: 'B', style: style);
 
       expect(cell1, equals(cell2));
       expect(cell1, isNot(equals(cell3)));
@@ -54,36 +42,29 @@ void main() {
     test('withStyle creates new cell with different style', () {
       const originalStyle = TuiStyle(bold: true);
       const newStyle = TuiStyle(italic: true);
-      const originalCell = TuiCell(codePoint: 65, style: originalStyle);
+      const originalCell = TuiCell(char: 'A', style: originalStyle);
 
       final newCell = originalCell.withStyle(newStyle);
 
-      expect(newCell.codePoint, equals(65));
+      expect(newCell.char, equals('A'));
       expect(newCell.style, equals(newStyle));
-      expect(originalCell.style, equals(originalStyle)); // Original unchanged
+      expect(originalCell.style, equals(originalStyle));
     });
 
     test('hashCode is consistent', () {
       const style = TuiStyle(bold: true);
-      const cell1 = TuiCell(codePoint: 65, style: style);
-      const cell2 = TuiCell(codePoint: 65, style: style);
+      const cell1 = TuiCell(char: 'A', style: style);
+      const cell2 = TuiCell(char: 'A', style: style);
 
       expect(cell1.hashCode, equals(cell2.hashCode));
     });
 
     test('isEmpty detects space characters', () {
-      const spaceCell = TuiCell(codePoint: 32);
-      const letterCell = TuiCell(codePoint: 65);
+      const spaceCell = TuiCell(char: ' ');
+      const letterCell = TuiCell(char: 'A');
 
       expect(spaceCell.isEmpty, isTrue);
       expect(letterCell.isEmpty, isFalse);
-    });
-
-    test('fromChar handles empty string', () {
-      final cell = TuiCell.fromChar('');
-
-      expect(cell.codePoint, equals(32)); // Should default to space
-      expect(cell.isEmpty, isTrue);
     });
   });
 
@@ -104,7 +85,7 @@ void main() {
 
     test('setCell updates cell at position', () {
       final surface = TuiSurface(width: 10, height: 5);
-      const newCell = TuiCell(codePoint: 65);
+      const newCell = TuiCell(char: 'A');
 
       surface.setCell(2, 3, newCell);
       final retrievedCell = surface.getCell(2, 3);
@@ -115,11 +96,9 @@ void main() {
     test('clearRect clears area to empty cells', () {
       final surface = TuiSurface(width: 10, height: 5);
 
-      // Fill some cells first
-      surface.setCell(1, 1, const TuiCell(codePoint: 65));
-      surface.setCell(2, 1, const TuiCell(codePoint: 66));
+      surface.setCell(1, 1, const TuiCell(char: 'A'));
+      surface.setCell(2, 1, const TuiCell(char: 'B'));
 
-      // Clear a rect
       surface.clearRect(1, 1, 2, 1);
 
       expect(surface.getCell(1, 1), equals(const TuiCell.empty()));
@@ -141,11 +120,9 @@ void main() {
     test('putText clips to surface bounds', () {
       final surface = TuiSurface(width: 3, height: 3);
 
-      // Try to draw text that would go beyond bounds
       surface.putText(2, 1, 'ABCD', style: const TuiStyle());
 
       expect(surface.getCell(2, 1).char, equals('A'));
-      // The rest should be clipped
     });
 
     test('toAnsiLines generates ANSI output', () {
@@ -163,13 +140,11 @@ void main() {
     test('bounds checking prevents out-of-bounds access', () {
       final surface = TuiSurface(width: 3, height: 3);
 
-      // These should not throw
-      surface.setCell(-1, 0, const TuiCell(codePoint: 65));
-      surface.setCell(0, -1, const TuiCell(codePoint: 65));
-      surface.setCell(10, 0, const TuiCell(codePoint: 65));
-      surface.setCell(0, 10, const TuiCell(codePoint: 65));
+      surface.setCell(-1, 0, const TuiCell(char: 'A'));
+      surface.setCell(0, -1, const TuiCell(char: 'A'));
+      surface.setCell(10, 0, const TuiCell(char: 'A'));
+      surface.setCell(0, 10, const TuiCell(char: 'A'));
 
-      // Surface should remain unchanged
       expect(surface.getCell(0, 0), equals(const TuiCell.empty()));
     });
 
@@ -185,7 +160,6 @@ void main() {
       expect(surface.getCell(2, 2).char, equals('X'));
       expect(surface.getCell(3, 2).char, equals('X'));
 
-      // Outside the rect should be unchanged
       expect(surface.getCell(0, 0), equals(const TuiCell.empty()));
       expect(surface.getCell(4, 4), equals(const TuiCell.empty()));
     });
@@ -203,13 +177,9 @@ void main() {
     test('clear method clears entire surface', () {
       final surface = TuiSurface(width: 3, height: 3);
 
-      // Fill with data first
       surface.putText(0, 0, 'ABC', style: const TuiStyle());
-
-      // Clear it
       surface.clear();
 
-      // Should all be empty
       for (int y = 0; y < 3; y++) {
         for (int x = 0; x < 3; x++) {
           expect(surface.getCell(x, y), equals(const TuiCell.empty()));
@@ -223,6 +193,46 @@ void main() {
 
       final rowString = surface.getRowString(1);
       expect(rowString, equals('ABC'));
+    });
+
+    test('wide character sets continuation cell', () {
+      final surface = TuiSurface(width: 10, height: 1);
+      surface.putTextClip(0, 0, 'A🚀B', 10);
+
+      expect(surface.getCell(0, 0).char, equals('A'));
+      expect(surface.getCell(1, 0).char, contains('🚀'));
+      expect(surface.getCell(2, 0).wideContinuation, isTrue);
+      expect(surface.getCell(3, 0).char, equals('B'));
+    });
+
+    test('toAnsiLines skips continuation cells', () {
+      final surface = TuiSurface(width: 10, height: 1);
+      surface.putChar(0, 0, '│');
+      surface.putTextClip(1, 0, 'A🚀B', 8);
+      surface.putChar(9, 0, '│');
+
+      final lines = surface.toAnsiLines();
+      final plain = lines[0].replaceAll(RegExp(r'\x1b\[[0-9;]*m'), '');
+      expect(TuiSurface.displayWidth(plain), equals(10));
+    });
+
+    test('zero-width chars do not occupy cells', () {
+      final surface = TuiSurface(width: 10, height: 1);
+      // ❤️ = U+2764 + U+FE0F (variation selector)
+      surface.putTextClip(0, 0, 'A❤️B', 10);
+
+      expect(surface.getCell(0, 0).char, equals('A'));
+      // ❤ with variation selector stored as one cluster
+      expect(surface.getCell(1, 0).char, contains('❤'));
+      // B follows after the wide char + continuation
+      expect(surface.getCell(3, 0).char, equals('B'));
+    });
+
+    test('displayWidth counts zero-width chars as 0', () {
+      expect(TuiSurface.displayWidth('A'), equals(1));
+      expect(TuiSurface.displayWidth('🚀'), equals(2));
+      // Variation selector should not add width
+      expect(TuiSurface.displayWidth('\u{FE0F}'), equals(0));
     });
   });
 }

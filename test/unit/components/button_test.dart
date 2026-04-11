@@ -108,31 +108,22 @@ void main() {
     });
   });
 
-  group('TuiButtonView', () {
-    test('constructor creates button view', () {
-      final button = TuiButton('Test');
-      final buttonView = TuiButtonView(button);
-
-      expect(buttonView.button, equals(button));
-    });
-
+  group('TuiButton.paintSurface', () {
     test('paintSurface handles empty rect', () {
       final button = TuiButton('Test');
-      final buttonView = TuiButtonView(button);
       final surface = TuiSurface(width: 10, height: 5);
       const emptyRect = TuiRect(x: 0, y: 0, width: 0, height: 0);
 
       // Should not throw
-      buttonView.paintSurface(surface, emptyRect);
+      button.paintSurface(surface, emptyRect);
     });
 
     test('paintSurface renders button on surface', () {
       final button = TuiButton('Test');
-      final buttonView = TuiButtonView(button);
       final surface = TuiSurface(width: 10, height: 5);
       const rect = TuiRect(x: 1, y: 1, width: 8, height: 1);
 
-      buttonView.paintSurface(surface, rect);
+      button.paintSurface(surface, rect);
 
       // Check that text was drawn (should be centered)
       final text = surface.getCell(3, 1).char; // Should be 'T' from 'Test'
@@ -141,11 +132,10 @@ void main() {
 
     test('paintSurface centers text correctly', () {
       final button = TuiButton('X');
-      final buttonView = TuiButtonView(button);
       final surface = TuiSurface(width: 10, height: 5);
       const rect = TuiRect(x: 0, y: 0, width: 7, height: 1);
 
-      buttonView.paintSurface(surface, rect);
+      button.paintSurface(surface, rect);
 
       // ' X ' should be centered in width 7
       // Center position should be (7 - 3) / 2 = 2, so 'X' at position 3
@@ -159,11 +149,10 @@ void main() {
         focused: true,
         focusedStyle: focusedStyle,
       );
-      final buttonView = TuiButtonView(button);
       final surface = TuiSurface(width: 10, height: 5);
       const rect = TuiRect(x: 0, y: 0, width: 8, height: 1);
 
-      buttonView.paintSurface(surface, rect);
+      button.paintSurface(surface, rect);
 
       // Check that style was applied (we can't easily test the exact style,
       // but we can verify the surface has been modified)
@@ -172,12 +161,11 @@ void main() {
 
     test('paintSurface handles long text', () {
       final button = TuiButton('Very long button text');
-      final buttonView = TuiButtonView(button);
       final surface = TuiSurface(width: 5, height: 5);
       const rect = TuiRect(x: 0, y: 0, width: 5, height: 1);
 
       // Should not throw and should handle clipping
-      buttonView.paintSurface(surface, rect);
+      button.paintSurface(surface, rect);
     });
   });
 }

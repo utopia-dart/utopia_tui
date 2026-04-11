@@ -1,9 +1,10 @@
 import '../core/style.dart';
-import '../core/component.dart';
+import '../core/interactive.dart';
 import '../core/canvas.dart';
 import '../core/rect.dart';
+import '../core/events.dart';
 
-class TuiTabs {
+class TuiTabs extends TuiInteractiveComponent {
   final List<String> tabs;
   int index;
   final TuiStyle? activeStyle;
@@ -16,35 +17,39 @@ class TuiTabs {
     this.activeStyle,
     this.inactiveStyle,
     this.separator = '  ',
-  });
+    bool focused = false,
+  }) {
+    this.focused = focused;
+  }
 
-  String render(int width, {bool focused = false}) {
-    final parts = <String>[];
-    for (var i = 0; i < tabs.length; i++) {
-      final label = ' ${tabs[i]} ';
-      if (i == index) {
-        final base = activeStyle ?? const TuiStyle();
-        final effective = focused
-            ? base.merge(const TuiStyle(underline: true))
-            : base;
-        parts.add(effective.apply(label));
-      } else {
-        parts.add(inactiveStyle?.apply(label) ?? label);
+  @override
+  bool handleInput(TuiEvent event) {
+    if (!focused) return false;
+
+    if (event is TuiKeyEvent) {
+      if (event.code == TuiKeyCode.arrowLeft ||
+          (event.isPrintable && event.char == 'h')) {
+        if (index > 0) {
+          index--;
+          markNeedsRebuild();
+          return true;
+        }
+      }
+      if (event.code == TuiKeyCode.arrowRight ||
+          (event.isPrintable && event.char == 'l')) {
+        if (index < tabs.length - 1) {
+          index++;
+          markNeedsRebuild();
+          return true;
+        }
       }
     }
-    final line = parts.join(separator);
-    return line.length > width
-        ? line.substring(0, width)
-        : line.padRight(width);
+
+    return false;
   }
-}
 
-/// Surface-based tabs component for the new rendering system
-class TuiTabsView extends TuiComponent {
-  final TuiTabs tabs;
-  final bool focused;
-
-  TuiTabsView(this.tabs, {this.focused = false});
+  @override
+  String get focusHint => 'h/l or ←→ to switch tabs';
 
   @override
   void paintSurface(TuiSurface surface, TuiRect rect) {
@@ -55,15 +60,15 @@ class TuiTabsView extends TuiComponent {
 
     // Render each tab with proper styling
     var x = rect.x;
-    for (var i = 0; i < tabs.tabs.length && x < rect.right; i++) {
-      final label = ' ${tabs.tabs[i]} ';
+    for (var i = 0; i < tabs.length && x < rect.right; i++) {
+      final label = ' ${tabs[i]} ';
 
       TuiStyle style;
-      if (i == tabs.index) {
-        final base = tabs.activeStyle ?? const TuiStyle();
+      if (i == index) {
+        final base = activeStyle ?? const TuiStyle();
         style = focused ? base.merge(const TuiStyle(underline: true)) : base;
       } else {
-        style = tabs.inactiveStyle ?? const TuiStyle();
+        style = inactiveStyle ?? const TuiStyle();
       }
 
       // Put the tab text with style
@@ -73,10 +78,9 @@ class TuiTabsView extends TuiComponent {
         x += tabWidth;
 
         // Add separator if not the last tab
-        if (i < tabs.tabs.length - 1 &&
-            x + tabs.separator.length <= rect.right) {
-          surface.putTextClip(x, rect.y, tabs.separator, tabs.separator.length);
-          x += tabs.separator.length;
+        if (i < tabs.length - 1 && x + separator.length <= rect.right) {
+          surface.putTextClip(x, rect.y, separator, separator.length);
+          x += separator.length;
         }
       }
     }
