@@ -73,10 +73,10 @@ class TuiContext {
     return _surface.toPlainLines();
   }
 
-  /// Captures the current surface content as styled strings.
+  /// Captures the current surface content as ANSI-styled strings.
   ///
-  /// This is an alias for [snapshot] since the surface already includes
-  /// styling information in its ANSI output.
+  /// Returns a list of strings with ANSI escape sequences for styling
+  /// and colors. For plain text without styling, use [snapshot].
   List<String> snapshotStyled() {
     return _surface.toAnsiLines();
   }

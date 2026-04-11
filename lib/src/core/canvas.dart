@@ -321,6 +321,7 @@ class TuiSurface {
     return lines;
   }
 
+  /// Convert the surface to plain text lines without ANSI styling.
   List<String> toPlainLines() {
     return List.generate(height, (row) => getRowString(row));
   }

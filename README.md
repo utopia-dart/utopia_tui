@@ -71,7 +71,7 @@ final theme = TuiTheme.oceanic;  // Ocean-blue theme
 TuiSideBySidePanels(
   leftTitle: ' Menu ',
   rightTitle: ' Content ',
-  leftChild: TuiListView(myList),
+  leftChild: myList,
   rightChild: TuiText('Content goes here'),
   leftWidth: 30,
   theme: TuiTheme.dark,

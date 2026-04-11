@@ -77,6 +77,7 @@ class TuiTextInput extends TuiComponent {
   @override
   void paintSurface(TuiSurface surface, TuiRect rect) {
     if (rect.isEmpty) return;
+    if (showBox && rect.width < 3) return;
     surface.clearRect(rect.x, rect.y, rect.width, rect.height);
     if (showBox) {
       surface.putText(rect.x, rect.y, '[');
@@ -89,6 +90,7 @@ class TuiTextInput extends TuiComponent {
       final start = (cursor - textWidth + 1).clamp(0, displayText.length);
       displayText = displayText.substring(start);
     }
+    if (textWidth <= 0) return;
     surface.putTextClip(textX, rect.y, displayText, textWidth);
     if (blinkOn) {
       final cursorPos = cursor.clamp(0, textWidth - 1);
