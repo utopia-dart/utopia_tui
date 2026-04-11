@@ -3,7 +3,6 @@ import '../core/canvas.dart';
 import '../core/rect.dart';
 import '../core/events.dart';
 import 'scroll_view.dart';
-import 'scroll_view_view.dart';
 
 /// Interactive scroll view with enhanced input handling
 class TuiInteractiveScrollView extends TuiInteractiveComponent {
@@ -94,6 +93,6 @@ class TuiInteractiveScrollView extends TuiInteractiveComponent {
   void paintSurface(TuiSurface surface, TuiRect rect) {
     _lastViewHeight = rect.height; // Update the viewport height
     _lastViewWidth = rect.width; // Update the viewport width
-    TuiScrollViewView(scrollView).paintSurface(surface, rect);
+    scrollView.paintSurface(surface, rect);
   }
 }

@@ -38,7 +38,8 @@ class NavigationTabs extends TuiComponent {
 
   @override
   void paintSurface(TuiSurface surface, TuiRect rect) {
-    TuiTabsView(tabs, focused: focused).paintSurface(surface, rect);
+    tabs.focused = focused;
+    tabs.paintSurface(surface, rect);
   }
 }
 
@@ -105,12 +106,10 @@ class ContentArea extends TuiComponent {
   TuiComponent _buildContent() {
     switch (selectedComponent) {
       case 'List':
-        return TuiListView(
-          TuiList(
-            const ['Alpha', 'Beta', 'Gamma'],
-            selectedStyle: theme.accent,
-            unselectedStyle: theme.dim,
-          ),
+        return TuiList(
+          const ['Alpha', 'Beta', 'Gamma'],
+          selectedStyle: theme.accent,
+          unselectedStyle: theme.dim,
         );
       case 'Panel':
         return TuiText(
@@ -131,16 +130,16 @@ class ContentArea extends TuiComponent {
         return TuiColumn(
           children: [
             TuiText('Progress: ${(progress * 100).round()}%'),
-            TuiProgressBarView(componentData['progressBar']),
+            componentData['progressBar'] as TuiProgressBar,
           ],
           heights: const [1, 1],
         );
       case 'Spinner':
-        return TuiSpinnerView(componentData['spinner']);
+        return componentData['spinner'] as TuiSpinner;
       case 'Checkbox':
-        return TuiCheckboxView(componentData['checkbox']);
+        return componentData['checkbox'] as TuiCheckbox;
       case 'Button':
-        return TuiButtonView(componentData['button']);
+        return componentData['button'] as TuiButton;
       case 'Table':
         final table = TuiTable(
           headers: const ['Col A', 'Col B', 'Col C'],
@@ -151,7 +150,7 @@ class ContentArea extends TuiComponent {
           ],
           columnWidths: const [10, 10, 10],
         );
-        return TuiTableView(table);
+        return table;
       case 'ScrollView':
         final interactiveScroll =
             componentData['interactiveScroll'] as TuiInteractiveScrollView?;
@@ -221,7 +220,7 @@ class StatusBar extends TuiComponent {
     final right =
         'Tui ${DateTime.now().toLocal().toIso8601String().substring(11, 19)}';
 
-    TuiStatusBarView(
+    TuiStatusBar(
       style: const TuiStyle(bg: 240, fg: 16),
       left: left,
       center: center,

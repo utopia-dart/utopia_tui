@@ -42,9 +42,7 @@ export 'src/core/rect.dart';
 
 // Components
 export 'src/components/list_menu.dart';
-export 'src/components/list_view.dart';
 export 'src/components/text_input.dart';
-export 'src/components/text_input_view.dart';
 export 'src/components/progress_bar.dart';
 export 'src/components/spinner.dart';
 export 'src/components/tabs.dart';
@@ -53,7 +51,6 @@ export 'src/components/checkbox.dart';
 export 'src/components/button.dart';
 export 'src/components/table.dart';
 export 'src/components/scroll_view.dart';
-export 'src/components/scroll_view_view.dart';
 export 'src/components/interactive_scroll_view.dart';
 export 'src/components/interactive_text_input.dart';
 export 'src/components/interactive_menu.dart';
