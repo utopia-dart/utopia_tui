@@ -249,10 +249,13 @@ class TuiRunner {
   Future<void> _dispose() async {
     await _tickSub?.cancel();
     await _resizeSub?.cancel();
+    // Restore stdin mode before cancelling the subscription,
+    // because cancel() closes the stream and invalidates the fd.
+    try {
+      stdin.lineMode = true;
+      stdin.echoMode = true;
+    } catch (_) {}
     await _keySub?.cancel();
-    stdin.lineMode = true;
-    stdin.echoMode = true;
-    terminal.resetRawMode();
     terminal.write('\x1b[0m');
     terminal.showCursor();
     terminal.write('\x1b[?1049l');
